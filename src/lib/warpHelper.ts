@@ -1,13 +1,14 @@
 import { WarpFactory, defaultCacheOptions } from 'warp-contracts';
 import { v4 as uuidv4 } from 'uuid';
+import { getAddress } from './arweaveHelper';
 import {
-    getDescription,
     getTitle,
+    getDescription,
     getWallet,
     getWarpContractTxId,
     waitFor,
 } from './common';
-import { getAddress } from './arweaveHelper';
+import type { Repo } from '../types';
 
 const jwk = getWallet();
 const contractTxId = getWarpContractTxId();
@@ -20,6 +21,19 @@ const getWarp = () =>
         inMemory: true,
     });
 const contract = getWarp().contract(contractTxId).connect(jwk);
+
+export async function getRepo(id: string) {
+    const address = await getAddress();
+
+    // let warp throw error if it can't retrieve the repositories
+    const response = await contract.viewState({
+        function: 'getRepository',
+        payload: {
+            id,
+        },
+    });
+    return response.result as Repo;
+}
 
 export async function getRepos() {
     const address = await getAddress();

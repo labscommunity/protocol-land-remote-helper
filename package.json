@@ -12,12 +12,14 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^20.8.4",
+    "@types/uuid": "^9.0.5",
     "tsup": "^7.2.0",
     "typescript": "^5.2.2"
   },
   "dependencies": {
     "arbundles": "^0.10.0",
     "arweave": "^1.14.4",
+    "jszip": "^3.10.1",
     "uuid": "^9.0.1",
     "warp-contracts": "^1.4.19"
   }

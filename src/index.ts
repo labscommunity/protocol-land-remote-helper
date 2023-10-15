@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import * as path from 'path';
 import { remoteHelper } from './lib/remoteHelper';
 
@@ -18,4 +20,4 @@ remoteHelper({
     remoteName: remoteName as string,
     remoteUrl: remoteUrl as string,
     tmpRemotePath,
-});
+}).then();

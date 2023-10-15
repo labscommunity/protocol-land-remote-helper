@@ -1,4 +1,8 @@
-import { WarpFactory, defaultCacheOptions } from 'warp-contracts';
+import {
+    LoggerFactory,
+    WarpFactory,
+    defaultCacheOptions,
+} from 'warp-contracts/mjs';
 import { v4 as uuidv4 } from 'uuid';
 import { getAddress } from './arweaveHelper';
 import {
@@ -15,17 +19,20 @@ const contractTxId = getWarpContractTxId();
 const title = getTitle();
 const description = getDescription();
 
-const getWarp = () =>
-    WarpFactory.forMainnet({
+const getWarp = () => {
+    // set log level to error
+    LoggerFactory.INST.logLevel('fatal');
+    return WarpFactory.forMainnet({
         ...defaultCacheOptions,
         inMemory: true,
     });
+};
 const contract = getWarp().contract(contractTxId).connect(jwk);
 
 export async function getRepo(id: string) {
     const address = await getAddress();
 
-    // let warp throw error if it can't retrieve the repositories
+    // let warp throw error if it can't retrieve the repository
     const response = await contract.viewState({
         function: 'getRepository',
         payload: {

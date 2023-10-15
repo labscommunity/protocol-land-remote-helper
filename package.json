@@ -3,10 +3,11 @@
     "version": "1.0.0",
     "description": "",
     "main": "src/index.ts",
+    "bin": "dist/index.js",
     "type": "module",
     "scripts": {
         "build": "tsup src/index.ts --format cjs,esm --dts",
-        "package": "pkg --out-path bin -C Gzip dist/index.js"
+        "package": "pkg --out-path bin -C Gzip ."
     },
     "keywords": [],
     "author": "",

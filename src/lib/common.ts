@@ -1,11 +1,11 @@
 import { getAddress } from './arweaveHelper';
-import { Tag } from 'arweave/node/lib/transaction';
-import { walletJWK } from './wallet';
+import { walletJWK } from '../wallet';
+import type { Tag } from '../types';
 
 const DESCRIPTION_PLACEHOLDER = 'Descentralized repo description';
 
 export const getWallet = () =>
-    process.env.WALLET ? JSON.parse(process.env.WALLET as string) : walletJWK;
+    JSON.parse(process.env.WALLET ? (process.env.WALLET as string) : walletJWK);
 
 export const getWarpContractTxId = () =>
     'w5ZU15Y2cLzZlu3jewauIlnzbKw-OAxbN9G5TbuuiDQ';

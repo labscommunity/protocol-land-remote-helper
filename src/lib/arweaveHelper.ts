@@ -1,7 +1,8 @@
 import Arweave from 'arweave';
-import { Tag } from 'arweave/node/lib/transaction';
 import { ArweaveSigner, createData } from 'arbundles';
 import { getWallet } from './common';
+import type { Tag } from '../types';
+import { withAsync } from './withAsync';
 
 const jwk = getWallet();
 
@@ -30,6 +31,18 @@ function initArweave() {
         port: 443,
         protocol: 'https',
     });
+}
+
+export async function arweaveDownload(txId: string) {
+    const { response, error } = await withAsync(() =>
+        fetch(`https://arweave.net/${txId}`)
+    );
+
+    if (error) {
+        throw new Error(error as string);
+    } else if (response) {
+        return await response.arrayBuffer();
+    }
 }
 
 async function arweaveUpload(zipBuffer: Buffer, tags: Tag[]) {

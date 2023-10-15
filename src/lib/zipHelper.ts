@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import JSZip from 'jszip';
+import { waitFor } from './common';
 
 export function writeBufferToFile(buffer: Buffer, filename: string) {
     try {
@@ -21,6 +22,36 @@ function loadIgnoreList(rootPath: string) {
             .filter((line) => line && !line.startsWith('#'));
     }
     return [];
+}
+
+export type UnpackGitRepoOptions = {
+    destPath: string;
+    arrayBuffer: ArrayBuffer;
+};
+
+export async function unpackGitRepo({
+    destPath,
+    arrayBuffer,
+}: UnpackGitRepoOptions) {
+    const zip = await JSZip.loadAsync(arrayBuffer);
+
+    zip.forEach(async (_, file) => {
+        if (file.dir) {
+            const folderPath = path.join(destPath, file.name);
+            fs.mkdirSync(folderPath, { recursive: true });
+        } else {
+            const filePath = path.join(destPath, file.name);
+            const content = await file.async('blob');
+            fs.writeFileSync(
+                filePath,
+                new Uint8Array(await content.arrayBuffer())
+            );
+        }
+    });
+
+    await waitFor(1000);
+
+    return true;
 }
 
 export async function zipRepoJsZip(

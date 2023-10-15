@@ -6,3 +6,8 @@ export type Repo = {
     owner: string;
     contributors: string[];
 };
+
+export type Tag = {
+    name: string;
+    value: string;
+};

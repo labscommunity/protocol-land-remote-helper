@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 import readline from 'readline';
 import { Writable } from 'stream';
 import { downloadProtocolLandRepo } from './protocolLandSync';
+import path from 'path';
 
 const OBJECTS_PUSHED = 'unpack ok';
 
@@ -12,9 +13,9 @@ export type RemoteHelperParams = {
     tmpRemotePath: string;
 };
 
-export const remoteHelper = (params: RemoteHelperParams) => {
+export const remoteHelper = async (params: RemoteHelperParams) => {
     const defaultTmpPath = process.env.HOME + '/tmp';
-    const { remoteName, remoteUrl, tmpRemotePath = defaultTmpPath } = params;
+    const { remoteName, remoteUrl, tmpRemotePath } = params;
 
     // Check if the tmp folder exists, and create it if it doesn't
     if (!existsSync(tmpRemotePath)) {
@@ -29,10 +30,13 @@ export const remoteHelper = (params: RemoteHelperParams) => {
     //   const repoPath = `${tmpRemotePath}/${remoteUrl.replace(/.*:\/\//, "")}`;
     const repoId = `${remoteUrl.replace(/.*:\/\//, '')}`;
 
-    console.error(`Using temp folder '${tmpRemotePath}' for remote syncing`);
-
     // sync protocol land repo to tmp_path
-    downloadProtocolLandRepo(repoId, tmpRemotePath);
+    console.error(
+        `Dowloading latest repo from Protocol.Land into tmp folder '${tmpRemotePath}' for remote syncing`
+    );
+    const repoName = await downloadProtocolLandRepo(repoId, tmpRemotePath);
+
+    const newTmpRemotePath = path.join(tmpRemotePath, repoName);
 
     let pushed = 0;
 
@@ -49,9 +53,7 @@ export const remoteHelper = (params: RemoteHelperParams) => {
     // Main communication loop
     async function readLinesUntilEmpty() {
         const promptForLine = () =>
-            new Promise<string>((resolve) => {
-                rl.question('Enter a line (or press Enter to exit): ', resolve);
-            });
+            new Promise<string>((resolve) => rl.question('', resolve));
 
         while (true) {
             const line = (await promptForLine()).trim();
@@ -72,7 +74,7 @@ export const remoteHelper = (params: RemoteHelperParams) => {
 
                 case 'connect':
                     console.log('');
-                    spawnPipedGitCommand(arg as string, tmpRemotePath);
+                    spawnPipedGitCommand(arg as string, newTmpRemotePath);
                     break;
             }
         }

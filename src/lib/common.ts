@@ -3,6 +3,7 @@ import { walletJWK } from '../wallet';
 import type { Tag } from '../types';
 
 const DESCRIPTION_PLACEHOLDER = 'Descentralized repo description';
+export const PL_TMP_PATH = '.protocol.land';
 
 export const getWallet = () =>
     JSON.parse(process.env.WALLET ? (process.env.WALLET as string) : walletJWK);
@@ -20,17 +21,14 @@ export const getDescription = () =>
         ? (process.env.REPO_DESCRIPTION as string)
         : DESCRIPTION_PLACEHOLDER;
 
-export async function getTags(createNewRepo: boolean) {
+export async function getTags(title: string, description: string) {
     return [
         { name: 'App-Name', value: 'Protocol.Land' },
         { name: 'Content-Type', value: 'application/zip' },
         { name: 'Creator', value: await getAddress() },
-        { name: 'Title', value: getTitle() },
-        { name: 'Description', value: getDescription() },
-        {
-            name: 'Type',
-            value: createNewRepo ? 'repo-create' : 'repo-update',
-        },
+        { name: 'Title', value: title },
+        { name: 'Description', value: description },
+        { name: 'Type', value: 'repo-update' },
     ] as Tag[];
 }
 

@@ -2,8 +2,13 @@ import { existsSync, mkdirSync } from 'fs';
 import { spawn } from 'child_process';
 import readline from 'readline';
 import { Writable } from 'stream';
-import { downloadProtocolLandRepo } from './protocolLandSync';
+import {
+    downloadProtocolLandRepo,
+    uploadProtocolLandRepo,
+} from './protocolLandSync';
 import path from 'path';
+import type { Repo } from '../types';
+import { waitFor } from './common';
 
 const OBJECTS_PUSHED = 'unpack ok';
 
@@ -34,9 +39,9 @@ export const remoteHelper = async (params: RemoteHelperParams) => {
     console.error(
         `Dowloading latest repo from Protocol.Land into tmp folder '${tmpRemotePath}' for remote syncing`
     );
-    const repoName = await downloadProtocolLandRepo(repoId, tmpRemotePath);
+    const repo = await downloadProtocolLandRepo(repoId, tmpRemotePath);
 
-    const newTmpRemotePath = path.join(tmpRemotePath, repoName);
+    const newTmpRemotePath = path.join(tmpRemotePath, repo.dataTxId);
 
     let pushed = 0;
 
@@ -74,7 +79,7 @@ export const remoteHelper = async (params: RemoteHelperParams) => {
 
                 case 'connect':
                     console.log('');
-                    spawnPipedGitCommand(arg as string, newTmpRemotePath);
+                    spawnPipedGitCommand(arg as string, newTmpRemotePath, repo);
                     break;
             }
         }
@@ -83,7 +88,12 @@ export const remoteHelper = async (params: RemoteHelperParams) => {
     readLinesUntilEmpty();
 };
 
-const spawnPipedGitCommand = (gitCommand: string, remoteUrl: string) => {
+const spawnPipedGitCommand = (
+    gitCommand: string,
+    remoteUrl: string,
+
+    repo: Repo
+) => {
     // define flag to check if objects have been pushed
     let objectsUpdated = false;
 
@@ -106,14 +116,25 @@ const spawnPipedGitCommand = (gitCommand: string, remoteUrl: string) => {
     });
 
     // Handle process exit
-    gitProcess.on('exit', (code) => {
+    gitProcess.on('exit', async (code) => {
         if (code === 0) {
             // if pushed to tmp remote, upload tmp remote to protocol land
             if (gitCommand === 'git-receive-pack' && objectsUpdated) {
+                waitFor(1000);
                 console.error(
                     `Pushed to temp remote. Now syncing with Protocol Land ...`
                 );
-                // uploadProtocolLandRepo(args[-1]);
+                const workingPath = path.join(remoteUrl, '..', '..', '..');
+                console.error(` > Updating repo to warp from '${workingPath}'`);
+                const success = await uploadProtocolLandRepo(workingPath, repo);
+                if (success)
+                    console.error(
+                        `Successfully pushed repo '${repo.id}' to Protocol Land`
+                    );
+                else
+                    console.error(
+                        `Failed to push repo '${repo.id}' to Protocol Land`
+                    );
             }
         } else {
             console.error(

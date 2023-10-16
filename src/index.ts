@@ -2,9 +2,7 @@
 
 import * as path from 'path';
 import { remoteHelper } from './lib/remoteHelper';
-
-// constants
-const PL_TMP_PATH = '.protocol.land';
+import { PL_TMP_PATH } from './lib/common';
 
 // parse command line arguments
 const [remoteName, remoteUrl] = process.argv.slice(2, 4); // only use 2 parametes (remote name and repo url)

@@ -58,11 +58,17 @@ export async function zipRepoJsZip(
     mainPath: string,
     zipRoot: string,
     folderToZip?: string,
-    useGitignore?: boolean
+    useGitignore?: boolean,
+    ignoreFiles?: string[]
 ) {
     if (!folderToZip) folderToZip = zipRoot;
 
-    const ignoreSet = new Set(useGitignore ? loadIgnoreList(zipRoot) : []);
+    const ignoreList = useGitignore ? loadIgnoreList(zipRoot) : [];
+    const ignoreFilesList = ignoreFiles
+        ? ignoreFiles.map((f) => path.join(zipRoot, f))
+        : [];
+
+    const ignoreSet = new Set([...ignoreList, ...ignoreFilesList]);
 
     const zip = new JSZip();
 
@@ -89,10 +95,10 @@ export async function zipRepoJsZip(
 
     for (const file of filesToInclude) {
         const content = fs.readFileSync(file);
-        const relativePath = `${mainPath ? mainPath + '/' : ''}${path.relative(
-            zipRoot,
-            file
-        )}`;
+        const relativePath = path.join(
+            mainPath ? mainPath + '/' : '',
+            path.relative(zipRoot, file)
+        );
         zip.file(relativePath, content);
     }
 

@@ -14,13 +14,13 @@ export async function uploadRepo(zipBuffer: Buffer, tags: Tag[]) {
     try {
         // upload compressed repo using bundlr
         const bundlrTxId = await bundlrUpload(zipBuffer, tags);
-        console.log('Posted Tx to Bundlr: ', bundlrTxId);
+        console.error('Posted Tx to Bundlr: ', bundlrTxId);
         return bundlrTxId;
     } catch (error) {
-        console.log('Error uploading using bundlr, trying with Arweave...');
+        console.error('Error uploading using bundlr, trying with Arweave...');
         // let Arweave throw if it encounters errors
         const arweaveTxId = await arweaveUpload(zipBuffer, tags);
-        console.log('Posted Tx to Arweave: ', arweaveTxId);
+        console.error('Posted Tx to Arweave: ', arweaveTxId);
         return arweaveTxId;
     }
 }

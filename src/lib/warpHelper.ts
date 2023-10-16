@@ -2,6 +2,8 @@ import {
     LoggerFactory,
     WarpFactory,
     defaultCacheOptions,
+    type CacheOptions,
+    type LogLevel,
 } from 'warp-contracts/mjs';
 import { v4 as uuidv4 } from 'uuid';
 import { getAddress } from './arweaveHelper';
@@ -16,24 +18,23 @@ import type { Repo } from '../types';
 
 const jwk = getWallet();
 const contractTxId = getWarpContractTxId();
-const title = getTitle();
-const description = getDescription();
 
-const getWarp = () => {
-    // set log level to error
-    LoggerFactory.INST.logLevel('fatal');
-    return WarpFactory.forMainnet({
-        ...defaultCacheOptions,
-        inMemory: true,
-    });
+const getWarp = (cacheOptions?: CacheOptions, logLevel?: LogLevel) => {
+    // set log level to fatal
+    LoggerFactory.INST.logLevel(logLevel ? logLevel : 'fatal');
+    const options = cacheOptions ? cacheOptions : defaultCacheOptions;
+    return WarpFactory.forMainnet({ ...options });
 };
-const contract = getWarp().contract(contractTxId).connect(jwk);
 
-export async function getRepo(id: string) {
+const contract = getWarp({ ...defaultCacheOptions, inMemory: true })
+    .contract(contractTxId)
+    .connect(jwk);
+
+export async function getRepo(id: string, cacheOptions?: CacheOptions) {
     const address = await getAddress();
-
+    let pl = getWarp(cacheOptions).contract(contractTxId).connect(jwk);
     // let warp throw error if it can't retrieve the repository
-    const response = await contract.viewState({
+    const response = await pl.viewState({
         function: 'getRepository',
         payload: {
             id,
@@ -55,44 +56,43 @@ export async function getRepos() {
     return response.result as { id: string; name: string }[];
 }
 
-export async function postRepoToWarp(
-    dataTxId: string,
-    repoInfo?: { id: string } | undefined
-) {
-    return !repoInfo
-        ? await newRepo(dataTxId)
-        : await updateRepo(repoInfo.id, dataTxId);
+export async function postRepoToWarp(dataTxId: string, repo: Repo) {
+    return updateRepo(repo, dataTxId);
 }
 
-async function newRepo(dataTxId: string) {
-    if (!title || !dataTxId) throw '[ warp ] No title or dataTx for new repo';
+// async function newRepo(dataTxId: string) {
+//     if (!title || !dataTxId) throw '[ warp ] No title or dataTx for new repo';
 
-    // const contract = getWarp().contract(contractTxId).connect(jwk);
+//     // const contract = getWarp().contract(contractTxId).connect(jwk);
 
-    const uuid = uuidv4();
+//     const uuid = uuidv4();
 
-    const payload = { id: uuid, name: title, description, dataTxId };
+//     const payload = { id: uuid, name: title, description, dataTxId };
 
-    await waitFor(500);
+//     await waitFor(500);
 
-    // let warp throw error if it can't perform the writeInteraction
-    await contract.writeInteraction({
-        function: 'initialize',
-        payload,
-    });
+//     // let warp throw error if it can't perform the writeInteraction
+//     await contract.writeInteraction({
+//         function: 'initialize',
+//         payload,
+//     });
 
-    console.log(`[ warp ] Repo '${title}' initialized with id '${uuid}'`);
+//     console.log(`[ warp ] Repo '${title}' initialized with id '${uuid}'`);
 
-    return { id: uuid };
-}
+//     return { id: uuid };
+// }
 
-async function updateRepo(id: string, dataTxId: string) {
-    if (!id || !title || !dataTxId)
+async function updateRepo(repo: Repo, newDataTxId: string) {
+    if (!repo.id || !repo.name || !newDataTxId)
         throw '[ warp ] No id, title or dataTxId to update repo ';
 
     // const contract = getWarp().contract(contractTxId).connect(jwk);
-
-    const payload = { id, name: title, description, dataTxId };
+    const payload = {
+        id: repo.id,
+        name: repo.name,
+        description: repo.description,
+        dataTxId: newDataTxId,
+    };
 
     await waitFor(500);
 
@@ -102,7 +102,7 @@ async function updateRepo(id: string, dataTxId: string) {
         payload,
     });
 
-    console.log(`[ warp ] Repo '${title}' with id '${payload.id}' updated`);
+    // console.error(`[ warp ] Repo '${repo.name}' with id '${payload.id}' updated`);
 
     return { id: payload.id };
 }

@@ -4,9 +4,10 @@ import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import type { JsonWebKey } from 'crypto';
 
-const DESCRIPTION_PLACEHOLDER = 'Descentralized repo description';
 export const PL_TMP_PATH = '.protocol.land';
 export const GIT_CONFIG_KEYFILE = 'protocol.land.keyfile';
+export const getWarpContractTxId = () =>
+    'w5ZU15Y2cLzZlu3jewauIlnzbKw-OAxbN9G5TbuuiDQ';
 
 export const log = (message: any) => console.error(` [PL] ${message}`);
 
@@ -36,19 +37,6 @@ export const getWallet = () => {
     }
 };
 
-export const getWarpContractTxId = () =>
-    'w5ZU15Y2cLzZlu3jewauIlnzbKw-OAxbN9G5TbuuiDQ';
-
-export const getTitle = () =>
-    process.env.REPO_TITLE
-        ? (process.env.REPO_TITLE as string)
-        : (process.cwd().split('/')[-1] as string);
-
-export const getDescription = () =>
-    process.env.REPO_DESCRIPTION
-        ? (process.env.REPO_DESCRIPTION as string)
-        : DESCRIPTION_PLACEHOLDER;
-
 export async function getTags(title: string, description: string) {
     return [
         { name: 'App-Name', value: 'Protocol.Land' },
@@ -64,6 +52,8 @@ export const waitFor = (delay: number) =>
     new Promise((res) => setTimeout(res, delay));
 
 export const exitWithError = (message: string) => {
-    console.error(`\n${message}\n`);
+    log(``);
+    log(`${message}`);
+    log(``);
     process.exit(1);
 };

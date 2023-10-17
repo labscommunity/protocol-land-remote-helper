@@ -5,7 +5,7 @@ import {
     type CacheOptions,
     type LogLevel,
 } from 'warp-contracts/mjs';
-import { getWallet, getWarpContractTxId, waitFor } from './common';
+import { getWallet, getWarpContractTxId, log, waitFor } from './common';
 import type { Repo } from '../types';
 import path from 'path';
 
@@ -21,7 +21,7 @@ const getWarp = (destPath?: string, logLevel?: LogLevel) => {
     LoggerFactory.INST.logLevel(logLevel ? logLevel : 'none');
     const options = destPath
         ? getWarpCacheOptions(destPath)
-        : defaultCacheOptions;
+        : { ...defaultCacheOptions, inMemory: true };
     return WarpFactory.forMainnet({ ...options });
 };
 
@@ -57,7 +57,7 @@ export async function updateWarpRepo(
     await waitFor(500);
 
     // let warp throw error if it can't perform the writeInteraction
-    const contract = getWarp(destPath).contract(getWarpContractTxId());
+    const contract = getWarp().contract(getWarpContractTxId());
     await contract.connect(getWallet()).writeInteraction({
         function: 'updateRepositoryTxId',
         payload,

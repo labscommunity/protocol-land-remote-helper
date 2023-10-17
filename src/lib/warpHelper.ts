@@ -5,23 +5,30 @@ import {
     type CacheOptions,
     type LogLevel,
 } from 'warp-contracts/mjs';
-import { getAddress } from './arweaveHelper';
 import { getWallet, getWarpContractTxId, waitFor } from './common';
 import type { Repo } from '../types';
+import path from 'path';
 
-const contractTxId = getWarpContractTxId();
+export const getWarpCacheOptions = (cachePath: string) => {
+    return {
+        ...defaultCacheOptions,
+        dbLocation: path.join(cachePath, defaultCacheOptions.dbLocation),
+    };
+};
 
-const getWarp = (cacheOptions?: CacheOptions, logLevel?: LogLevel) => {
-    // set log level to fatal
+const getWarp = (destPath?: string, logLevel?: LogLevel) => {
+    // set warp log level to none
     LoggerFactory.INST.logLevel(logLevel ? logLevel : 'none');
-    const options = cacheOptions ? cacheOptions : defaultCacheOptions;
+    const options = destPath
+        ? getWarpCacheOptions(destPath)
+        : defaultCacheOptions;
     return WarpFactory.forMainnet({ ...options });
 };
 
-const contract = getWarp({ ...defaultCacheOptions }).contract(contractTxId);
+// const contract = getWarp({ ...defaultCacheOptions }).contract(contractTxId);
 
-export async function getRepo(id: string, cacheOptions?: CacheOptions) {
-    let pl = getWarp(cacheOptions).contract(contractTxId);
+export async function getRepo(id: string, destpath?: string) {
+    let pl = getWarp(destpath).contract(getWarpContractTxId());
     // let warp throw error if it can't retrieve the repository
     const response = await pl.viewState({
         function: 'getRepository',
@@ -32,28 +39,14 @@ export async function getRepo(id: string, cacheOptions?: CacheOptions) {
     return response.result as Repo;
 }
 
-export async function getRepos() {
-    const address = await getAddress();
-
-    // let warp throw error if it can't retrieve the repositories
-    const response = await contract.viewState({
-        function: 'getRepositoriesByOwner',
-        payload: {
-            owner: address,
-        },
-    });
-    return response.result as { id: string; name: string }[];
-}
-
-export async function postRepoToWarp(dataTxId: string, repo: Repo) {
-    return updateRepo(repo, dataTxId);
-}
-
-async function updateRepo(repo: Repo, newDataTxId: string) {
+export async function updateWarpRepo(
+    repo: Repo,
+    newDataTxId: string,
+    destPath?: string
+) {
     if (!repo.id || !repo.name || !newDataTxId)
         throw '[ warp ] No id, title or dataTxId to update repo ';
 
-    // const contract = getWarp().contract(contractTxId).connect(jwk);
     const payload = {
         id: repo.id,
         name: repo.name,
@@ -64,12 +57,11 @@ async function updateRepo(repo: Repo, newDataTxId: string) {
     await waitFor(500);
 
     // let warp throw error if it can't perform the writeInteraction
+    const contract = getWarp(destPath).contract(getWarpContractTxId());
     await contract.connect(getWallet()).writeInteraction({
         function: 'updateRepositoryTxId',
         payload,
     });
-
-    // console.error(`[ warp ] Repo '${repo.name}' with id '${payload.id}' updated`);
 
     return { id: payload.id };
 }

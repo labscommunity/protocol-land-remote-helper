@@ -35,7 +35,7 @@ export const remoteHelper = async (params: RemoteHelperParams) => {
     const bareRemotePath = path.join(tmpPath, repo.dataTxId);
 
     // start communication with git
-    talkToGit(bareRemotePath, repo);
+    talkToGit(bareRemotePath, repo, tmpPath);
 };
 
 function getTmpPath(gitdir: string) {
@@ -50,7 +50,7 @@ function getTmpPath(gitdir: string) {
     return tmpPath;
 }
 
-function talkToGit(bareRemotePath: string, repo: Repo) {
+function talkToGit(bareRemotePath: string, repo: Repo, tmpPath: string) {
     // create a readline interface to read lines
     const rl = readline.createInterface({
         input: process.stdin,
@@ -86,7 +86,12 @@ function talkToGit(bareRemotePath: string, repo: Repo) {
                 case 'connect':
                     console.log('');
                     // spawn git utility 'arg' with the remoteUrl as an argument
-                    spawnPipedGitCommand(arg as string, bareRemotePath, repo);
+                    spawnPipedGitCommand(
+                        arg as string,
+                        bareRemotePath,
+                        repo,
+                        tmpPath
+                    );
                     break;
             }
         }
@@ -98,7 +103,8 @@ function talkToGit(bareRemotePath: string, repo: Repo) {
 const spawnPipedGitCommand = (
     gitCommand: string,
     remoteUrl: string,
-    repo: Repo
+    repo: Repo,
+    tmpPath: string
 ) => {
     // if pushing without a wallet, exit without running gitCommand (getWallet prints a message)
     if (gitCommand === 'git-receive-pack' && !getWallet()) process.exit(0);
@@ -147,7 +153,11 @@ const spawnPipedGitCommand = (
 
             waitFor(1000);
 
-            const success = await uploadProtocolLandRepo(pathToPack, repo);
+            const success = await uploadProtocolLandRepo(
+                pathToPack,
+                repo,
+                tmpPath
+            );
 
             if (success)
                 log(`Successfully pushed repo '${repo.id}' to Protocol Land`, {

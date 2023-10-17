@@ -1,4 +1,4 @@
-import { getRepo, postRepoToWarp } from './warpHelper';
+import { getRepo, updateWarpRepo } from './warpHelper';
 import { execSync, spawn } from 'child_process';
 import { arweaveDownload, uploadRepo } from './arweaveHelper';
 import { unpackGitRepo, zipRepoJsZip } from './zipHelper';
@@ -17,10 +17,7 @@ export const downloadProtocolLandRepo = async (
     // find repo in Protocol Land's warp contract
     let repo: Repo | undefined;
     try {
-        repo = await getRepo(repoId, {
-            ...defaultCacheOptions,
-            dbLocation: path.join(destPath, defaultCacheOptions.dbLocation),
-        });
+        repo = await getRepo(repoId, destPath);
     } catch (err) {
         log(err);
     }
@@ -100,7 +97,11 @@ export const downloadProtocolLandRepo = async (
     return repo;
 };
 
-export const uploadProtocolLandRepo = async (repoPath: string, repo: Repo) => {
+export const uploadProtocolLandRepo = async (
+    repoPath: string,
+    repo: Repo,
+    destPath: string
+) => {
     // pack repo
     log('Packing repo ...');
     const buffer = await zipRepoJsZip(repo.name, repoPath, '', true, [
@@ -109,14 +110,20 @@ export const uploadProtocolLandRepo = async (repoPath: string, repo: Repo) => {
 
     // upload to bundlr/arweave
     log('Uploading to Arweave ...');
-    const dataTxId = await uploadRepo(
-        buffer,
-        await getTags(repo.name, repo.description)
-    );
+    let dataTxId: string | undefined;
+    try {
+        dataTxId = await uploadRepo(
+            buffer,
+            await getTags(repo.name, repo.description)
+        );
+    } catch (error) {
+        log(error);
+    }
+    if (!dataTxId) return false;
 
     // update repo info in warp
     log('Updating in warp ...');
-    const updated = await postRepoToWarp(dataTxId, repo);
+    const updated = await updateWarpRepo(repo, dataTxId, destPath);
 
     // check for warp update success
     return updated.id === repo.id;

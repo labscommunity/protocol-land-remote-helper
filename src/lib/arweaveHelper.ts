@@ -1,6 +1,6 @@
 import Arweave from 'arweave';
 import { ArweaveSigner, createData } from 'arbundles';
-import { getWallet } from './common';
+import { getWallet, log } from './common';
 import type { Tag } from '../types';
 import { withAsync } from './withAsync';
 
@@ -12,13 +12,14 @@ export async function uploadRepo(zipBuffer: Buffer, tags: Tag[]) {
     try {
         // upload compressed repo using bundlr
         const bundlrTxId = await bundlrUpload(zipBuffer, tags);
-        console.error('Posted Tx to Bundlr: ', bundlrTxId);
+        log(`Posted Tx to Bundlr: ${bundlrTxId}`);
         return bundlrTxId;
     } catch (error) {
-        console.error('Error uploading using bundlr, trying with Arweave...');
+        // dismiss error and try with arweave
+        log('Bundlr failed, trying with Arweave...');
         // let Arweave throw if it encounters errors
         const arweaveTxId = await arweaveUpload(zipBuffer, tags);
-        console.error('Posted Tx to Arweave: ', arweaveTxId);
+        log(`Posted Tx to Arweave: ${arweaveTxId}`);
         return arweaveTxId;
     }
 }
@@ -56,7 +57,7 @@ async function arweaveUpload(zipBuffer: Buffer, tags: Tag[]) {
     await arweave.transactions.sign(tx, jwk);
     const response = await arweave.transactions.post(tx);
 
-    console.log(`${response.status} - ${response.statusText}`);
+    log(`${response.status} - ${response.statusText}`);
 
     if (response.status !== 200) {
         // throw error if arweave tx wasn't posted
@@ -95,7 +96,7 @@ export async function bundlrUpload(zipBuffer: Buffer, tags: Tag[]) {
 
     if (res.status >= 400)
         throw new Error(
-            `[ bundlr ] Posting repo w/bundlr faile. Error: ${res.status} - ${res.statusText}`
+            `[ bundlr ] Posting repo w/bundlr failed. Error: ${res.status} - ${res.statusText}`
         );
 
     return dataItem.id;

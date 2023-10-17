@@ -1,5 +1,5 @@
 import { getRepo, postRepoToWarp } from './warpHelper';
-import { spawn } from 'child_process';
+import { execSync, spawn } from 'child_process';
 import { arweaveDownload, uploadRepo } from './arweaveHelper';
 import { unpackGitRepo, zipRepoJsZip } from './zipHelper';
 import type { Repo } from '../types';
@@ -78,12 +78,13 @@ export const downloadProtocolLandRepo = async (
         process.exit(0);
     }
 
-    // delete the unpacked repo folder (hide stdout)
-    await runCommand('rm', ['-rf', '', unpackedRepoPath], {
-        forwardStdOut: false,
-    });
+    // rm -rf everything but the bare repo and warp cache (discard stdout)
+    try {
+        execSync(
+            `find ${destPath} -mindepth 1 -maxdepth 1 -type d ! -name "cache" ! -name "${repo.dataTxId}" -exec rm -rf {} \\;`
+        );
+    } catch {}
 
-    // return full repo info
     return repo;
 };
 

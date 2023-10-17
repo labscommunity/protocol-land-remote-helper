@@ -101,15 +101,24 @@ export const downloadProtocolLandRepo = async (
 };
 
 export const uploadProtocolLandRepo = async (repoPath: string, repo: Repo) => {
-    console.error('Packing repo');
+    // pack repo
+    log('Packing repo ...');
     const buffer = await zipRepoJsZip(repo.name, repoPath, '', true, [
         PL_TMP_PATH,
     ]);
+
+    // upload to bundlr/arweave
+    log('Uploading to Arweave ...');
     const dataTxId = await uploadRepo(
         buffer,
         await getTags(repo.name, repo.description)
     );
+
+    // update repo info in warp
+    log('Updating in warp ...');
     const updated = await postRepoToWarp(dataTxId, repo);
+
+    // check for warp update success
     return updated.id === repo.id;
 };
 
@@ -119,7 +128,7 @@ const runCommand = async (
     args: string[],
     options?: { forwardStdOut: boolean }
 ) => {
-    console.error(` > Running '${command} ${args.join(' ')}'`);
+    log(`Running '${command} ${args.join(' ')}' ...`);
     const child = spawn(command, args, {
         shell: true,
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -128,13 +137,14 @@ const runCommand = async (
         child.on('error', reject);
         if (options?.forwardStdOut) {
             // forward stdout to stderr (to be shown in console)
-            child.stdout.on('data', (data) => process.stderr.write);
+            child.stdout.on('data', (data) => log);
         }
         child.on('close', (code) => {
             if (code === 0) {
                 resolve(true);
             } else {
-                reject(new Error(`Command exited with code ${code}`));
+                log(`Command Failed. Exit code: ${code}`);
+                resolve(false);
             }
         });
     });

@@ -6,7 +6,7 @@
     "bin": "dist/index.js",
     "type": "module",
     "scripts": {
-        "build": "tsup src/index.ts --format cjs,esm --dts",
+        "build": "tsup src/index.ts --format esm --dts",
         "package": "pkg --out-path bin -C Gzip ."
     },
     "keywords": [],

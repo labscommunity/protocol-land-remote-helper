@@ -1,4 +1,3 @@
-import { walletJWK } from '../wallet';
 import { getRepo, postRepoToWarp } from './warpHelper';
 import { spawn } from 'child_process';
 import { arweaveDownload, uploadRepo } from './arweaveHelper';
@@ -7,97 +6,88 @@ import type { Repo } from '../types';
 import path from 'path';
 import { defaultCacheOptions } from 'warp-contracts/mjs';
 import { existsSync } from 'fs';
-import { PL_TMP_PATH, getTags } from './common';
-
-const getWallet = () => {
-    const wallet = process.env.WALLET
-        ? JSON.parse(process.env.WALLET)
-        : walletJWK;
-    if (!wallet) throw new Error('No Wallet provided');
-    console.error(` > Wallet size: ${wallet.length}`);
-};
+import { PL_TMP_PATH, getTags, log } from './common';
 
 export const downloadProtocolLandRepo = async (
     repoId: string,
     destPath: string
 ) => {
-    // const wallet = getWallet();
-    let repo: Repo;
+    log(`Getting latest repo from Protocol.Land into '${destPath}' ...`);
+
+    // find repo in Protocol Land's warp contract
+    let repo: Repo | undefined;
     try {
-        // find repo in PL warp contract
         repo = await getRepo(repoId, {
             ...defaultCacheOptions,
             dbLocation: path.join(destPath, defaultCacheOptions.dbLocation),
         });
-        // console.error(` > Repo's dataTxId: ${repo.dataTxId}`);
-    } catch (error) {
-        const { message } = error as { message: string };
-        if (message === 'Repository not found.') {
-            console.error(
-                `Remote repo '${repoId}' not found, please create a repo in https://protocol.land first`
-            );
-            // git init empty repo
-            // await runCommand('git', ['init', destPath]);
-        } else {
-            console.error(error);
-        }
-        // stop process
-        process.exit(1);
+    } catch (err) {
+        log(err);
     }
 
+    // if repo not found, exit gracefully
+    if (!repo) {
+        log(`Repo '${repoId}' not found`);
+        log(`Please create a repo in https://protocol.land first`);
+        process.exit(0);
+    }
+
+    // use tmp folder named as repo's latest dataTxId
     const latestVersionRepoPath = path.join(destPath, repo.dataTxId);
-    // if `repo.dataTxId` folder exsits, do nothing, repo is already cached
+
+    // if folder exsits, assume it's cached and return
     if (existsSync(latestVersionRepoPath)) {
-        console.error(`Using cached repo in '${latestVersionRepoPath}'`);
+        log(`Using cached repo in '${latestVersionRepoPath}'`);
         return repo;
     }
 
     // if not, download repo data from arweave
-    console.error(
-        `Repo cache not found, downloading from arweave with txId '${repo.dataTxId}'`
-    );
+    log(`Downloading from arweave with txId '${repo.dataTxId}' ...`);
     const arrayBuffer = await arweaveDownload(repo.dataTxId);
     if (!arrayBuffer) {
-        console.error('Failed to fetch repo data from arweave');
-        process.exit(1);
+        log('Failed to fetch repo data from arweave.');
+        log('Check connection or repo integrity in https://protocol.land');
+        process.exit(0);
     }
-    // console.error(` > Zipped Repo's size: ${zippedRepo.byteLength} bytes`);
+
     // unzip repo into destPath
+    log(`Unpacking downloaded repo ...`);
     const status = await unpackGitRepo({
         destPath,
         arrayBuffer,
     });
 
     if (!status) {
-        console.error('Failed to unpack repo');
-        process.exit(1);
-    } else {
-        console.error('Downloaded repo unpacked successfully');
-        const dowloadedRepoPath = path.join(destPath, repo.name);
-        const bareRepoPath = path.join(destPath, repo.dataTxId);
-        // clone it as a bare repo
-        const cloned = await runCommand(
-            'git',
-            ['clone', '--bare', dowloadedRepoPath, bareRepoPath],
-            { forwardStdOut: true }
-        );
-        if (!cloned) {
-            console.error('Failed to prepare bare remote from dowloaded repo');
-            process.exit(1);
-        }
-
-        // delete the downloaded PL repo
-        await runCommand('rm', ['-rf', '', dowloadedRepoPath], {
-            forwardStdOut: true,
-        });
-        // return the name of the folder where we cloned the bare repo
-
-        return repo;
+        log('Unpacking failed!');
+        process.exit(0);
     }
+
+    // unpacked into `repo.name` folder, clone a bare repo from it
+    const unpackedRepoPath = path.join(destPath, repo.name);
+    const bareRepoPath = path.join(destPath, repo.dataTxId);
+
+    // clone it as a bare repo
+    const cloned = await runCommand(
+        'git',
+        ['clone', '--bare', unpackedRepoPath, bareRepoPath],
+        { forwardStdOut: true }
+    );
+
+    if (!cloned) {
+        log('Failed to prepare bare remote from unpacked repo!');
+        process.exit(0);
+    }
+
+    // delete the unpacked repo folder (hide stdout)
+    await runCommand('rm', ['-rf', '', unpackedRepoPath], {
+        forwardStdOut: false,
+    });
+
+    // return full repo info
+    return repo;
 };
 
 export const uploadProtocolLandRepo = async (repoPath: string, repo: Repo) => {
-    const wallet = getWallet();
     console.error('Packing repo');
     const buffer = await zipRepoJsZip(repo.name, repoPath, '', true, [
         PL_TMP_PATH,

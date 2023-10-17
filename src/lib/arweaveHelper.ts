@@ -4,8 +4,6 @@ import { getWallet } from './common';
 import type { Tag } from '../types';
 import { withAsync } from './withAsync';
 
-const jwk = getWallet();
-
 export async function getAddress() {
     return await initArweave().wallets.jwkToAddress(getWallet());
 }
@@ -46,6 +44,7 @@ export async function arweaveDownload(txId: string) {
 }
 
 async function arweaveUpload(zipBuffer: Buffer, tags: Tag[]) {
+    const jwk = getWallet();
     if (!jwk) throw '[ arweave ] No jwk wallet supplied';
 
     const arweave = initArweave();
@@ -74,12 +73,13 @@ async function arweaveUpload(zipBuffer: Buffer, tags: Tag[]) {
 }
 
 export async function bundlrUpload(zipBuffer: Buffer, tags: Tag[]) {
+    const jwk = getWallet();
     if (!jwk) throw '[ bundlr ] No jwk wallet supplied';
 
     // Testing upload with arbundles
     const node = 'https://node2.bundlr.network';
     const uint8ArrayZip = new Uint8Array(zipBuffer);
-    const signer = new ArweaveSigner(getWallet());
+    const signer = new ArweaveSigner(jwk);
 
     const dataItem = createData(uint8ArrayZip, signer, { tags });
 

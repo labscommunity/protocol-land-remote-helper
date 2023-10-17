@@ -8,43 +8,49 @@ import {
 } from './protocolLandSync';
 import path from 'path';
 import type { Repo } from '../types';
-import { waitFor } from './common';
+import { PL_TMP_PATH, getWallet, waitFor } from './common';
 
+// string to check if objects were pushed
 const OBJECTS_PUSHED = 'unpack ok';
 
 export type RemoteHelperParams = {
     remoteName: string;
     remoteUrl: string;
-    tmpRemotePath: string;
+    gitdir: string;
 };
 
 export const remoteHelper = async (params: RemoteHelperParams) => {
-    const defaultTmpPath = process.env.HOME + '/tmp';
-    const { remoteName, remoteUrl, tmpRemotePath } = params;
+    const { remoteUrl, gitdir } = params;
 
-    // Check if the tmp folder exists, and create it if it doesn't
-    if (!existsSync(tmpRemotePath)) {
-        mkdirSync(tmpRemotePath, { recursive: true });
-        if (!existsSync(tmpRemotePath)) {
-            console.error(`Failed to create the directory: ${tmpRemotePath}`);
-            process.exit(1);
-        }
-    }
+    // get tmp path for remote (throws if can't create a tmp path)
+    const tmpPath = getTmpPath(gitdir);
 
-    // Join tmpPath and the repo folder filtering the 'protocol://'
-    //   const repoPath = `${tmpRemotePath}/${remoteUrl.replace(/.*:\/\//, "")}`;
+    // get repoId from remoteUrl (remove the `protocol.land://` from it)
     const repoId = `${remoteUrl.replace(/.*:\/\//, '')}`;
 
-    // sync protocol land repo to tmp_path
-    console.error(
-        `Dowloading latest repo from Protocol.Land into tmp folder '${tmpRemotePath}' for remote syncing`
-    );
-    const repo = await downloadProtocolLandRepo(repoId, tmpRemotePath);
+    // download protocol land repo latest version to tmpRemotePath
+    const repo = await downloadProtocolLandRepo(repoId, tmpPath);
 
-    const newTmpRemotePath = path.join(tmpRemotePath, repo.dataTxId);
+    // construct bare repo path
+    const bareRemotePath = path.join(tmpPath, repo.dataTxId);
 
-    let pushed = 0;
+    // start communication with git
+    talkToGit(bareRemotePath, repo);
+};
 
+function getTmpPath(gitdir: string) {
+    const tmpPath = path.join(gitdir, PL_TMP_PATH);
+
+    // Check if the tmp folder exists, and create it if it doesn't
+    if (!existsSync(tmpPath)) {
+        mkdirSync(tmpPath, { recursive: true });
+        if (!existsSync(tmpPath))
+            throw new Error(`Failed to create the directory: ${tmpPath}`);
+    }
+    return tmpPath;
+}
+
+function talkToGit(bareRemotePath: string, repo: Repo) {
     // create a readline interface to read lines
     const rl = readline.createInterface({
         input: process.stdin,
@@ -79,21 +85,24 @@ export const remoteHelper = async (params: RemoteHelperParams) => {
 
                 case 'connect':
                     console.log('');
-                    spawnPipedGitCommand(arg as string, newTmpRemotePath, repo);
+                    // spawn git utility 'arg' with the remoteUrl as an argument
+                    spawnPipedGitCommand(arg as string, bareRemotePath, repo);
                     break;
             }
         }
     }
 
     readLinesUntilEmpty();
-};
+}
 
 const spawnPipedGitCommand = (
     gitCommand: string,
     remoteUrl: string,
-
     repo: Repo
 ) => {
+    // if pushing without a wallet, exit without running gitCommand (getWallet prints a message)
+    if (gitCommand === 'git-receive-pack' && !getWallet()) process.exit(0);
+
     // define flag to check if objects have been pushed
     let objectsUpdated = false;
 

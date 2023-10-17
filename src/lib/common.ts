@@ -1,12 +1,40 @@
 import { getAddress } from './arweaveHelper';
-import { walletJWK } from '../wallet';
 import type { Tag } from '../types';
+import { execSync } from 'child_process';
+import { readFileSync } from 'fs';
+import type { JsonWebKey } from 'crypto';
 
 const DESCRIPTION_PLACEHOLDER = 'Descentralized repo description';
 export const PL_TMP_PATH = '.protocol.land';
+export const GIT_CONFIG_KEYFILE = 'protocol.land.keyfile';
 
-export const getWallet = () =>
-    JSON.parse(process.env.WALLET ? (process.env.WALLET as string) : walletJWK);
+export const log = (message: any) => console.error(` [PL] ${message}`);
+
+let wallet: JsonWebKey | null = null;
+export const getWallet = () => {
+    const walletNotFound = () => {
+        log(`Failed to get wallet keyfile path from git config.`);
+        log(
+            `Run 'git config --add ${GIT_CONFIG_KEYFILE} YOUR_WALLET_KEYFILE_FULL_PATH' to set up`
+        );
+        return null;
+    };
+
+    if (wallet) return wallet;
+    try {
+        const stdout = execSync(`git config --get ${GIT_CONFIG_KEYFILE}`);
+        const jwkPath = stdout.toString().trim();
+        if (!jwkPath) walletNotFound();
+
+        const jwk = readFileSync(jwkPath, { encoding: 'utf-8' })
+            .toString()
+            .trim();
+        if (!jwk) walletNotFound();
+        return JSON.parse(jwk);
+    } catch (error) {
+        walletNotFound();
+    }
+};
 
 export const getWarpContractTxId = () =>
     'w5ZU15Y2cLzZlu3jewauIlnzbKw-OAxbN9G5TbuuiDQ';

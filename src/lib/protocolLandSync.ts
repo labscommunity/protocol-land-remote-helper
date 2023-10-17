@@ -27,8 +27,10 @@ export const downloadProtocolLandRepo = async (
 
     // if repo not found, exit gracefully
     if (!repo) {
-        log(`Repo '${repoId}' not found`);
-        log(`Please create a repo in https://protocol.land first`);
+        log(`Repo '${repoId}' not found`, { color: 'red' });
+        log(`Please create a repo in https://protocol.land first`, {
+            color: 'green',
+        });
         process.exit(0);
     }
 
@@ -45,8 +47,10 @@ export const downloadProtocolLandRepo = async (
     log(`Downloading from arweave with txId '${repo.dataTxId}' ...`);
     const arrayBuffer = await arweaveDownload(repo.dataTxId);
     if (!arrayBuffer) {
-        log('Failed to fetch repo data from arweave.');
-        log('Check connection or repo integrity in https://protocol.land');
+        log('Failed to fetch repo data from arweave.', { color: 'red' });
+        log('Check connection or repo integrity in https://protocol.land', {
+            color: 'green',
+        });
         process.exit(0);
     }
 
@@ -58,7 +62,10 @@ export const downloadProtocolLandRepo = async (
     });
 
     if (!status) {
-        log('Unpacking failed!');
+        log('Unpacking failed!', { color: 'red' });
+        log('Check repo integrity in https://protocol.land', {
+            color: 'green',
+        });
         process.exit(0);
     }
 
@@ -74,7 +81,12 @@ export const downloadProtocolLandRepo = async (
     );
 
     if (!cloned) {
-        log('Failed to prepare bare remote from unpacked repo!');
+        log('Failed to prepare bare remote from unpacked repo!', {
+            color: 'red',
+        });
+        log('Check repo integrity in https://protocol.land', {
+            color: 'green',
+        });
         process.exit(0);
     }
 

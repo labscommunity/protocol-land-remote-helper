@@ -1,14 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 import JSZip from 'jszip';
-import { waitFor } from './common';
+import { log, waitFor } from './common';
 
 export function writeBufferToFile(buffer: Buffer, filename: string) {
     try {
         fs.writeFileSync(filename, buffer);
-        console.log(`File "${filename}" written successfully.`);
+        log(`File "${filename}" written successfully.`);
     } catch (error) {
-        console.error('Error writing file: ', error);
+        log(`Error writing file: ${error}`);
     }
 }
 
@@ -68,12 +68,14 @@ export async function zipRepoJsZip(
         ? ignoreFiles.map((f) => path.join(zipRoot, f))
         : [];
 
+    // build set of files to ignore from array argument + .gitignore if used
     const ignoreSet = new Set([...ignoreList, ...ignoreFilesList]);
 
     const zip = new JSZip();
 
     const filesToInclude: string[] = [];
 
+    // loop to walk the path to pack
     const walk = (currentPath: string) => {
         const items = fs.readdirSync(currentPath);
 
@@ -93,6 +95,7 @@ export async function zipRepoJsZip(
     };
     walk(folderToZip);
 
+    // add files found to be included for packing
     for (const file of filesToInclude) {
         const content = fs.readFileSync(file);
         const relativePath = path.join(
@@ -102,5 +105,6 @@ export async function zipRepoJsZip(
         zip.file(relativePath, content);
     }
 
+    // return final packed buffer
     return await zip.generateAsync({ type: 'nodebuffer' });
 }

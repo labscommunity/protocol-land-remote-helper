@@ -8,7 +8,7 @@ import {
 } from './protocolLandSync';
 import path from 'path';
 import type { Repo } from '../types';
-import { PL_TMP_PATH, getWallet, waitFor } from './common';
+import { PL_TMP_PATH, getWallet, log, waitFor } from './common';
 
 // string to check if objects were pushed
 const OBJECTS_PUSHED = 'unpack ok';
@@ -106,7 +106,7 @@ const spawnPipedGitCommand = (
     // define flag to check if objects have been pushed
     let objectsUpdated = false;
 
-    // call helper that manages comms with git
+    // spawn the gitCommand and pipe all stdio
     const gitProcess = spawn(gitCommand, [remoteUrl as string], {
         stdio: ['pipe', 'pipe', 'pipe'], // Pipe for stdin, stdout, and stderr
     });
@@ -119,36 +119,44 @@ const spawnPipedGitCommand = (
     gitProcess.stdout.pipe(process.stdout);
     gitProcess.stderr.pipe(process.stderr);
 
-    // parse stdout to check if objects have been updated (avoid an empty push)
+    // parse stdout to check if objects have been updated (avoid uploading after an empty push)
     gitProcess.stdout.on('data', (data) => {
         if (data.toString().includes(OBJECTS_PUSHED)) objectsUpdated = true;
     });
 
     // Handle process exit
     gitProcess.on('exit', async (code) => {
-        if (code === 0) {
-            // if pushed to tmp remote, upload tmp remote to protocol land
-            if (gitCommand === 'git-receive-pack' && objectsUpdated) {
-                waitFor(1000);
-                console.error(
-                    `Pushed to temp remote. Now syncing with Protocol Land ...`
-                );
-                const workingPath = path.join(remoteUrl, '..', '..', '..');
-                console.error(` > Updating repo to warp from '${workingPath}'`);
-                const success = await uploadProtocolLandRepo(workingPath, repo);
-                if (success)
-                    console.error(
-                        `Successfully pushed repo '${repo.id}' to Protocol Land`
-                    );
-                else
-                    console.error(
-                        `Failed to push repo '${repo.id}' to Protocol Land`
-                    );
-            }
-        } else {
-            console.error(
-                `git command '${gitCommand}' exited with code ${code}.`
+        // if error, show message and exit
+        if (code !== 0) {
+            log(
+                `git command '${gitCommand}' exited with error. Exit code: ${code}`,
+                {
+                    color: 'red',
+                }
             );
+            process.exit(code ? code : 1);
+        }
+
+        // if pushed to tmp bare remote ok and objects were updated, then upload repo to protocol land
+        if (gitCommand === 'git-receive-pack' && objectsUpdated) {
+            log(
+                `Push to temp remote finished successfully, now syncing with Protocol Land ...`
+            );
+
+            const pathToPack = path.join(remoteUrl, '..', '..', '..');
+
+            waitFor(1000);
+
+            const success = await uploadProtocolLandRepo(pathToPack, repo);
+
+            if (success)
+                log(`Successfully pushed repo '${repo.id}' to Protocol Land`, {
+                    color: 'green',
+                });
+            else
+                log(`Failed to push repo '${repo.id}' to Protocol Land`, {
+                    color: 'red',
+                });
         }
     });
 };

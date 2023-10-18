@@ -144,14 +144,14 @@ var getWallet = () => {
     return wallet;
   const jwkPath = getJwkPath();
   if (!jwkPath)
-    walletNotFoundMessage();
+    return walletNotFoundMessage();
   try {
     const jwk = readFileSync(jwkPath, { encoding: "utf-8" }).toString().trim();
     if (!jwk)
-      walletNotFoundMessage();
+      return walletNotFoundMessage();
     return JSON.parse(jwk);
   } catch (error) {
-    walletNotFoundMessage();
+    return walletNotFoundMessage();
   }
 };
 var walletNotFoundMessage = (params = { warn: false }) => {

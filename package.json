@@ -1,5 +1,5 @@
 {
-    "name": "git-remote-proland",
+    "name": "@7i7o/git-remote-proland",
     "version": "0.0.1",
     "description": "Git Remote Helper",
     "main": "src/index.ts",

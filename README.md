@@ -4,9 +4,9 @@ A basic git-remote-helper for Protocol Land remotes
 
 ## Requirements
 
-    - `git`
-    - `node`
-    - `npm`, `yarn` or `pnpm`
+- `git`
+- `node`
+- `npm`, `yarn` or `pnpm`
 
 This is a tool to allow `git` to communicate and sync [Protocol Land](https://protocol.land) repos.
 
@@ -59,7 +59,6 @@ git clone proland://YOUR_PROTOCOL_LAND_REPO_ID repo-name
 ```
 
 For example, if you want to clone an [example repo](https://protocol-land-git-development-community-labs.vercel.app/#/repository/ca6a9b1a-3e77-4158-9707-e079cbf1fdeb) from protocol land, you can run:
-
 
 ```bash
 git clone proland://ca6a9b1a-3e77-4158-9707-e079cbf1fdeb playground

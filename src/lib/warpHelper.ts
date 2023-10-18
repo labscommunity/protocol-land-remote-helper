@@ -2,7 +2,6 @@ import {
     LoggerFactory,
     WarpFactory,
     defaultCacheOptions,
-    type CacheOptions,
     type LogLevel,
 } from 'warp-contracts/mjs';
 import { getWallet, getWarpContractTxId, log, waitFor } from './common';
@@ -24,8 +23,6 @@ const getWarp = (destPath?: string, logLevel?: LogLevel) => {
         : { ...defaultCacheOptions, inMemory: true };
     return WarpFactory.forMainnet({ ...options });
 };
-
-// const contract = getWarp({ ...defaultCacheOptions }).contract(contractTxId);
 
 export async function getRepo(id: string, destpath?: string) {
     let pl = getWarp(destpath).contract(getWarpContractTxId());

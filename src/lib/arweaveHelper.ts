@@ -3,9 +3,12 @@ import { ArweaveSigner, createData } from 'arbundles';
 import { getWallet, log } from './common';
 import type { Tag } from '../types';
 import { withAsync } from './withAsync';
+import type { JsonWebKey } from 'crypto';
 
-export async function getAddress() {
-    return await initArweave().wallets.jwkToAddress(getWallet());
+export async function getAddress(wallet?: JsonWebKey) {
+    return await initArweave().wallets.jwkToAddress(
+        wallet ? wallet : getWallet()
+    );
 }
 
 export async function uploadRepo(zipBuffer: Buffer, tags: Tag[]) {

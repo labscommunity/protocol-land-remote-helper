@@ -13,6 +13,7 @@ import {
     getJwkPath,
     getWallet,
     log,
+    ownerOrContributor,
     waitFor,
     walletNotFoundMessage,
 } from './common';
@@ -93,7 +94,7 @@ function talkToGit(bareRemotePath: string, repo: Repo, tmpPath: string) {
                 case 'connect':
                     console.log('');
                     // spawn git utility 'arg' with the remoteUrl as an argument
-                    spawnPipedGitCommand(
+                    await spawnPipedGitCommand(
                         arg as string,
                         bareRemotePath,
                         repo,
@@ -107,17 +108,38 @@ function talkToGit(bareRemotePath: string, repo: Repo, tmpPath: string) {
     readLinesUntilEmpty();
 }
 
-const spawnPipedGitCommand = (
+const spawnPipedGitCommand = async (
     gitCommand: string,
     remoteUrl: string,
     repo: Repo,
     tmpPath: string
 ) => {
-    // if pushing without a wallet, exit without running gitCommand (getWallet prints a message)
-    if (gitCommand === 'git-receive-pack' && !getWallet()) process.exit(0);
+    // if pushing
+    if (gitCommand === 'git-receive-pack') {
+        const wallet = getWallet({ warn: false });
 
-    // warn user to set up wallet if it's not set up
-    if (!getJwkPath()) walletNotFoundMessage({ warn: true });
+        // if missing wallet, exit without running gitCommand (getWallet prints a message)
+        if (!wallet) process.exit(0);
+
+        const ownerOrContrib = await ownerOrContributor(repo, wallet, {
+            pushing: true,
+        });
+
+        // if not owner or contriburtor, exit without running gitCommand (ownerOrContributor prints a message)
+        if (!ownerOrContrib) process.exit(0);
+    } else {
+        // not pushing
+
+        // getWallet warns if wallet is not found
+        const wallet = getWallet({ warn: true });
+
+        if (wallet) {
+            // has a wallet defined, but
+            // warn user if not owner or contributor (fn already prints a message)
+            ownerOrContributor(repo, wallet);
+        }
+    }
+
     // define flag to check if objects have been pushed
     let objectsUpdated = false;
 

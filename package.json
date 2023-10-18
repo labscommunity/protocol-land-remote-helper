@@ -1,6 +1,6 @@
 {
     "name": "@7i7o/git-remote-proland",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Git Remote Helper",
     "main": "src/index.ts",
     "bin": {

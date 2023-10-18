@@ -36,6 +36,10 @@ export const getWallet = () => {
             `Run 'git config --add ${GIT_CONFIG_KEYFILE} YOUR_WALLET_KEYFILE_FULL_PATH' to set it up`,
             { color: 'green' }
         );
+        log(
+            `Use '--global' to use have a default keyfile for all protocol land repos`,
+            { color: 'green' }
+        );
         return null;
     };
 

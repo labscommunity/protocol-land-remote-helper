@@ -1,5 +1,5 @@
 import { getAddress } from './arweaveHelper';
-import type { Tag } from '../types';
+import type { Repo, Tag } from '../types';
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import type { JsonWebKey } from 'crypto';
@@ -36,10 +36,10 @@ export const getJwkPath = () => {
     }
 };
 
-export const getWallet = () => {
+export const getWallet = (params: { warn: boolean } = { warn: false }) => {
     if (wallet) return wallet;
     const jwkPath = getJwkPath();
-    if (!jwkPath) return walletNotFoundMessage();
+    if (!jwkPath) return walletNotFoundMessage(params);
     try {
         const jwk = readFileSync(jwkPath, { encoding: 'utf-8' })
             .toString()
@@ -75,6 +75,38 @@ export const walletNotFoundMessage = (
         `Use '--global' to have a default keyfile for all Protocol Land repos`,
         { color: 'green' }
     );
+    return null;
+};
+
+export const ownerOrContributor = async (
+    repo: Repo,
+    wallet: JsonWebKey,
+    options: { pushing: boolean } = { pushing: false }
+) => {
+    const { pushing } = options;
+    const address = await getAddress(wallet);
+    const ownerOrContrib =
+        repo.owner === address ||
+        repo.contributors.some((contributor) => contributor === address);
+    if (!ownerOrContrib) notOwnerOrContributorMessage({ warn: !pushing });
+    return ownerOrContrib;
+};
+
+export const notOwnerOrContributorMessage = (
+    params: { warn: boolean } = { warn: false }
+) => {
+    const { warn } = params;
+    if (warn) {
+        log(
+            `You are not the repo owner nor a contributor. You will need an owner or contributor jwk to push to this repo.`,
+            { color: 'green' }
+        );
+    } else {
+        log(
+            `You are not the repo owner nor a contributor. You can't push to this repo.`,
+            { color: 'red' }
+        );
+    }
     return null;
 };
 

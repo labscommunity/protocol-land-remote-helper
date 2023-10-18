@@ -72,7 +72,7 @@ export const walletNotFoundMessage = (
         { color: 'green' }
     );
     log(
-        `Use '--global' to use have a default keyfile for all protocol land repos`,
+        `Use '--global' to have a default keyfile for all Protocol Land repos`,
         { color: 'green' }
     );
     return null;

@@ -132,14 +132,20 @@ var log = (message, options) => {
   }
 };
 var wallet = null;
-var getJwkPath = () => execSync(`git config --get ${GIT_CONFIG_KEYFILE}`).toString().trim();
+var getJwkPath = () => {
+  try {
+    return execSync(`git config --get ${GIT_CONFIG_KEYFILE}`).toString().trim();
+  } catch (error) {
+    return "";
+  }
+};
 var getWallet = () => {
   if (wallet)
     return wallet;
+  const jwkPath = getJwkPath();
+  if (!jwkPath)
+    walletNotFoundMessage();
   try {
-    const jwkPath = getJwkPath();
-    if (!jwkPath)
-      walletNotFoundMessage();
     const jwk = readFileSync(jwkPath, { encoding: "utf-8" }).toString().trim();
     if (!jwk)
       walletNotFoundMessage();
@@ -167,7 +173,7 @@ var walletNotFoundMessage = (params = { warn: false }) => {
     { color: "green" }
   );
   log(
-    `Use '--global' to use have a default keyfile for all protocol land repos`,
+    `Use '--global' to have a default keyfile for all Protocol Land repos`,
     { color: "green" }
   );
   return null;

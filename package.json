@@ -1,17 +1,40 @@
 {
-    "name": "git-remote-protocol.land",
+    "name": "git-remote-proland",
     "version": "1.0.0",
-    "description": "",
+    "description": "Git Remote Helper",
     "main": "src/index.ts",
-    "bin": "dist/index.js",
+    "bin": {
+        "git-remote-proland": "dist/index.js"
+    },
     "type": "module",
     "scripts": {
         "build": "tsup src/index.ts --format esm --dts",
         "package": "pkg --out-path bin -C Gzip ."
     },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
+    "keywords": [
+        "git-remote-helper",
+        "git",
+        "remote-helper",
+        "git remote helper"
+    ],
+    "author": "@7i7o",
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
+    "files": [
+        "dist/",
+        "src/",
+        "package.json",
+        "tsconfig.json",
+        "LICENSE",
+        "README.md"
+    ],
+    "homepage": "https://github.com/7i7o/proland#readme",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/7i7o/proland.git"
+    },
     "devDependencies": {
         "@types/node": "^20.8.4",
         "@types/uuid": "^9.0.5",

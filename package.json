@@ -8,8 +8,7 @@
     },
     "type": "module",
     "scripts": {
-        "build": "tsup src/index.ts --format esm --dts",
-        "package": "pkg --out-path bin -C Gzip ."
+        "build": "tsup src/index.ts --format esm --dts"
     },
     "keywords": [
         "git-remote-helper",

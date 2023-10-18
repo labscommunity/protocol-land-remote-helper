@@ -1,5 +1,3 @@
 node_modules
 bin
-#dist
 .env
-src/wallet*

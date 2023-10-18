@@ -2,13 +2,16 @@
     "name": "@7i7o/git-remote-proland",
     "version": "0.0.2",
     "description": "Git Remote Helper",
-    "main": "src/index.ts",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
     "bin": {
         "git-remote-proland": "dist/index.js"
     },
-    "type": "module",
     "scripts": {
-        "build": "tsup src/index.ts --format esm --dts"
+        "lint": "tsc",
+        "build": "tsup src/index.ts --format esm --dts",
+        "release": "pnpm run build && changeset publish"
     },
     "keywords": [
         "git-remote-helper",
@@ -35,6 +38,7 @@
         "url": "https://github.com/7i7o/proland.git"
     },
     "devDependencies": {
+        "@changesets/cli": "^2.26.2",
         "@types/node": "^20.8.4",
         "@types/uuid": "^9.0.5",
         "tsup": "^7.2.0",

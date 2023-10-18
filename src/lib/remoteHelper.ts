@@ -8,7 +8,14 @@ import {
 } from './protocolLandSync';
 import path from 'path';
 import type { Repo } from '../types';
-import { PL_TMP_PATH, getWallet, log, waitFor } from './common';
+import {
+    PL_TMP_PATH,
+    getJwkPath,
+    getWallet,
+    log,
+    waitFor,
+    walletNotFoundMessage,
+} from './common';
 
 // string to check if objects were pushed
 const OBJECTS_PUSHED = 'unpack ok';
@@ -109,6 +116,8 @@ const spawnPipedGitCommand = (
     // if pushing without a wallet, exit without running gitCommand (getWallet prints a message)
     if (gitCommand === 'git-receive-pack' && !getWallet()) process.exit(0);
 
+    // warn user to set up wallet if it's not set up
+    if (!getJwkPath()) walletNotFoundMessage({ warn: true });
     // define flag to check if objects have been pushed
     let objectsUpdated = false;
 

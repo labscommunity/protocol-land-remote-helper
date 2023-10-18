@@ -25,38 +25,51 @@ export const log = (message: any, options?: { color: 'red' | 'green' }) => {
 };
 
 let wallet: JsonWebKey | null = null;
+
+export const getJwkPath = () =>
+    execSync(`git config --get ${GIT_CONFIG_KEYFILE}`).toString().trim();
+
 export const getWallet = () => {
-    const walletNotFound = () => {
+    if (wallet) return wallet;
+    try {
+        const jwkPath = getJwkPath();
+        if (!jwkPath) walletNotFoundMessage();
+
+        const jwk = readFileSync(jwkPath, { encoding: 'utf-8' })
+            .toString()
+            .trim();
+        if (!jwk) walletNotFoundMessage();
+        return JSON.parse(jwk);
+    } catch (error) {
+        walletNotFoundMessage();
+    }
+};
+
+export const walletNotFoundMessage = (
+    params: { warn: boolean } = { warn: false }
+) => {
+    const { warn } = params;
+    if (warn) {
+        log(
+            `If you need to push to the repo, please set up the path to your Arweave JWK.`,
+            { color: 'green' }
+        );
+    } else {
         log(`Failed to get wallet keyfile path from git config.`);
         log(
             `You need an owner or contributor wallet to have write access to the repo.`,
             { color: 'red' }
         );
-        log(
-            `Run 'git config --add ${GIT_CONFIG_KEYFILE} YOUR_WALLET_KEYFILE_FULL_PATH' to set it up`,
-            { color: 'green' }
-        );
-        log(
-            `Use '--global' to use have a default keyfile for all protocol land repos`,
-            { color: 'green' }
-        );
-        return null;
-    };
-
-    if (wallet) return wallet;
-    try {
-        const stdout = execSync(`git config --get ${GIT_CONFIG_KEYFILE}`);
-        const jwkPath = stdout.toString().trim();
-        if (!jwkPath) walletNotFound();
-
-        const jwk = readFileSync(jwkPath, { encoding: 'utf-8' })
-            .toString()
-            .trim();
-        if (!jwk) walletNotFound();
-        return JSON.parse(jwk);
-    } catch (error) {
-        walletNotFound();
     }
+    log(
+        `Run 'git config --add ${GIT_CONFIG_KEYFILE} YOUR_WALLET_KEYFILE_FULL_PATH' to set it up`,
+        { color: 'green' }
+    );
+    log(
+        `Use '--global' to use have a default keyfile for all protocol land repos`,
+        { color: 'green' }
+    );
+    return null;
 };
 
 export async function getTags(title: string, description: string) {

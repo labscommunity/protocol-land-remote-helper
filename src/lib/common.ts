@@ -26,15 +26,21 @@ export const log = (message: any, options?: { color: 'red' | 'green' }) => {
 
 let wallet: JsonWebKey | null = null;
 
-export const getJwkPath = () =>
-    execSync(`git config --get ${GIT_CONFIG_KEYFILE}`).toString().trim();
+export const getJwkPath = () => {
+    try {
+        return execSync(`git config --get ${GIT_CONFIG_KEYFILE}`)
+            .toString()
+            .trim();
+    } catch (error) {
+        return '';
+    }
+};
 
 export const getWallet = () => {
     if (wallet) return wallet;
+    const jwkPath = getJwkPath();
+    if (!jwkPath) walletNotFoundMessage();
     try {
-        const jwkPath = getJwkPath();
-        if (!jwkPath) walletNotFoundMessage();
-
         const jwk = readFileSync(jwkPath, { encoding: 'utf-8' })
             .toString()
             .trim();

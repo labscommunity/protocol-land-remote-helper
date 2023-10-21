@@ -25,7 +25,7 @@ npm install --global @7i7o/git-remote-proland
 ### Using `yarn`
 
 ```bash
-yarn add --global @7i7o/git-remote-proland
+yarn global add @7i7o/git-remote-proland
 ```
 
 ### Using `pnpm`

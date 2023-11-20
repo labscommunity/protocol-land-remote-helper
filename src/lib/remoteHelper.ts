@@ -10,10 +10,12 @@ import path from 'path';
 import type { Repo } from '../types';
 import {
     PL_TMP_PATH,
-    getJwkPath,
+    clearCache,
     getWallet,
     log,
     ownerOrContributor,
+    setCacheDirty,
+    unsetCacheDirty,
     waitFor,
     walletNotFoundMessage,
 } from './common';
@@ -174,11 +176,14 @@ const spawnPipedGitCommand = async (
             process.exit(code ? code : 1);
         }
 
-        // if pushed to tmp bare remote ok and objects were updated, then upload repo to protocol land
+        // if pushed to tmp bare remote ok AND objects were updated, then upload repo to protocol land
         if (gitCommand === 'git-receive-pack' && objectsUpdated) {
             log(
                 `Push to temp remote finished successfully, now syncing with Protocol Land ...`
             );
+
+            // mark cache as inconsistent
+            setCacheDirty(tmpPath, repo.dataTxId);
 
             const pathToPack = path.join(remoteUrl, '..', '..', '..');
 
@@ -190,14 +195,30 @@ const spawnPipedGitCommand = async (
                 tmpPath
             );
 
+            // We clear the cached remote:
+            //   If upload succeeded, there's a new txId for the repo
+            //   If upload failed, the cached remote has an inconsistent state
+            clearCache(tmpPath, { keepFolders: ['cache'] });
+
+            // remove inconsistent cache mark
+            unsetCacheDirty(tmpPath, repo.dataTxId);
+
             if (success)
                 log(`Successfully pushed repo '${repo.id}' to Protocol Land`, {
                     color: 'green',
                 });
-            else
+            else {
                 log(`Failed to push repo '${repo.id}' to Protocol Land`, {
                     color: 'red',
                 });
+                log(
+                    'Please run `git pull` first to clean the cache and integrate your changes',
+                    {
+                        color: 'red',
+                    }
+                );
+                process.exit(1);
+            }
         }
     });
 };

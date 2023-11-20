@@ -6,7 +6,7 @@ import type { Repo } from '../types';
 import path from 'path';
 import { defaultCacheOptions } from 'warp-contracts/mjs';
 import { existsSync } from 'fs';
-import { PL_TMP_PATH, getTags, log } from './common';
+import { PL_TMP_PATH, clearCache, getTags, isCacheDirty, log } from './common';
 
 export const downloadProtocolLandRepo = async (
     repoId: string,
@@ -34,10 +34,17 @@ export const downloadProtocolLandRepo = async (
     // use tmp folder named as repo's latest dataTxId
     const latestVersionRepoPath = path.join(destPath, repo.dataTxId);
 
-    // if folder exsits, assume it's cached and return
+    // if folder exists, there is a cached remote
     if (existsSync(latestVersionRepoPath)) {
-        log(`Using cached repo in '${latestVersionRepoPath}'`);
-        return repo;
+        // check if cache is dirty
+        if (!isCacheDirty(destPath, repo.dataTxId)) {
+            // cache is clean, use it
+            log(`Using cached repo in '${latestVersionRepoPath}'`);
+            return repo;
+        }
+
+        // cache is dirty, clear cache and continue
+        clearCache(destPath, { keepFolders: ['cache'] });
     }
 
     // if not, download repo data from arweave
@@ -89,9 +96,7 @@ export const downloadProtocolLandRepo = async (
 
     // rm -rf everything but the bare repo and warp cache (discard stdout)
     try {
-        execSync(
-            `find ${destPath} -mindepth 1 -maxdepth 1 -type d ! -name "cache" ! -name "${repo.dataTxId}" -exec rm -rf {} \\;`
-        );
+        clearCache(destPath, { keepFolders: ['cache', repo.dataTxId] });
     } catch {}
 
     return repo;

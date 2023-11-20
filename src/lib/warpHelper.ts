@@ -4,7 +4,7 @@ import {
     defaultCacheOptions,
     type LogLevel,
 } from 'warp-contracts/mjs';
-import { getWallet, getWarpContractTxId, log, waitFor } from './common';
+import { getWallet, getWarpContractTxId, waitFor } from './common';
 import type { Repo } from '../types';
 import path from 'path';
 

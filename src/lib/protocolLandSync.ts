@@ -1,10 +1,9 @@
 import { getRepo, updateWarpRepo } from './warpHelper';
-import { execSync, spawn } from 'child_process';
+import { spawn } from 'child_process';
 import { arweaveDownload, uploadRepo } from './arweaveHelper';
 import { unpackGitRepo, zipRepoJsZip } from './zipHelper';
 import type { Repo } from '../types';
 import path from 'path';
-import { defaultCacheOptions } from 'warp-contracts/mjs';
 import { existsSync } from 'fs';
 import { PL_TMP_PATH, clearCache, getTags, isCacheDirty, log } from './common';
 

@@ -3,7 +3,6 @@ import type { Repo, Tag } from '../types';
 import { execSync } from 'child_process';
 import { accessSync, constants, readFileSync } from 'fs';
 import type { JsonWebKey } from 'crypto';
-import { emitKeypressEvents } from 'readline';
 import path from 'path';
 
 const ANSI_RESET = '\x1b[0m';

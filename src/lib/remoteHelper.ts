@@ -17,7 +17,6 @@ import {
     setCacheDirty,
     unsetCacheDirty,
     waitFor,
-    walletNotFoundMessage,
 } from './common';
 
 // string to check if objects were pushed

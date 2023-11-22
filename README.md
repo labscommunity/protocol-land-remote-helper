@@ -1,6 +1,6 @@
-# Git Remote Proland
+# Protocol Land Git Remote Helper
 
-A basic git-remote-helper for Protocol Land remotes
+A git-remote-helper to handle Protocol Land remotes
 
 ## Requirements
 
@@ -8,7 +8,7 @@ A basic git-remote-helper for Protocol Land remotes
 - `node`
 - `npm`, `yarn` or `pnpm`
 
-This is a tool to allow `git` to communicate and sync [Protocol Land](https://protocol.land) repos.
+This is a tool to allow `git` to communicate and sync [Protocol Land](https://protocol.land/) repos.
 
 You need `node` installed in your system. We recommend using `nvm`, a powerful node version manager.
 
@@ -19,19 +19,19 @@ Once you have `node` running in your system, please install a node package manag
 ### Using `npm`
 
 ```bash
-npm install --global @7i7o/git-remote-proland
+npm install --global @protocol.land/git-remote-helper
 ```
 
 ### Using `yarn`
 
 ```bash
-yarn global add @7i7o/git-remote-proland
+yarn global add @protocol.land/git-remote-helper
 ```
 
 ### Using `pnpm`
 
 ```bash
-pnpm add --global @7i7o/git-remote-proland
+pnpm add --global @protocol.land/git-remote-helper
 ```
 
 ## Setup Arweave Wallet keyfile
@@ -58,8 +58,8 @@ This allows `git` to sync to [Protocol Land](https://protocol.land) repos.
 git clone proland://YOUR_PROTOCOL_LAND_REPO_ID repo-name
 ```
 
-For example, if you want to clone an [example repo](https://protocol-land-git-development-community-labs.vercel.app/#/repository/ca6a9b1a-3e77-4158-9707-e079cbf1fdeb) from protocol land, you can run:
+For example, if you want to clone [Protocol Land's repo](https://protocol.land/#/repository/6ace6247-d267-463d-b5bd-7e50d98c3693) from protocol land, you can run:
 
 ```bash
-git clone proland://ca6a9b1a-3e77-4158-9707-e079cbf1fdeb playground
+git clone proland://6ace6247-d267-463d-b5bd-7e50d98c3693 protocol-land
 ```

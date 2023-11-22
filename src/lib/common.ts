@@ -1,12 +1,16 @@
 import { getAddress } from './arweaveHelper';
 import type { Repo, Tag } from '../types';
 import { execSync } from 'child_process';
-import { readFileSync } from 'fs';
+import { accessSync, constants, readFileSync } from 'fs';
 import type { JsonWebKey } from 'crypto';
+import path from 'path';
 
 const ANSI_RESET = '\x1b[0m';
 const ANSI_RED = '\x1b[31m';
 const ANSI_GREEN = '\x1b[32m';
+
+const DIRTY_EXT = ".tmp"
+
 export const PL_TMP_PATH = '.protocol.land';
 export const GIT_CONFIG_KEYFILE = 'protocol.land.keyfile';
 export const getWarpContractTxId = () =>
@@ -119,6 +123,44 @@ export async function getTags(title: string, description: string) {
         { name: 'Description', value: description },
         { name: 'Type', value: 'repo-update' },
     ] as Tag[];
+}
+
+export function clearCache(
+    cachePath: string,
+    options: { keepFolders: string[] }
+) {
+    const { keepFolders = [] } = options;
+    const ommitedFolders = keepFolders.map((v) => `! -name "${v}"`).join(' ');
+    execSync(
+        `find ${cachePath} -mindepth 1 -maxdepth 1 -type d ${ommitedFolders} -exec rm -rf {} \\;`
+    );
+}
+
+export function setCacheDirty(cachePath: string, remoteName: string) {
+    if (!cachePath || !remoteName)
+        throw new Error('Cache and MutexName are required');
+    execSync(`touch ${path.join(cachePath, remoteName, DIRTY_EXT)}`);
+}
+
+export function unsetCacheDirty(cachePath: string, remoteName: string) {
+    if (!cachePath || !remoteName)
+        throw new Error('Cache and MutexName are required');
+    execSync(`rm -f ${path.join(cachePath, remoteName, DIRTY_EXT)}`);
+}
+
+export function isCacheDirty(cachePath: string, remoteName: string) {
+    if (!cachePath || !remoteName)
+        throw new Error('Cache and MutexName are required');
+    // Check if the file exists
+    try {
+        accessSync(
+            path.join(cachePath, remoteName, DIRTY_EXT),
+            constants.R_OK | constants.W_OK
+        );
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 export const waitFor = (delay: number) =>

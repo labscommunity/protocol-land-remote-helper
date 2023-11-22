@@ -1,4 +1,4 @@
-# @7i7o/git-remote-proland
+# @protocol.land/git-remote-helper
 
 ## 0.0.5
 

@@ -1,7 +1,7 @@
 {
-    "name": "@7i7o/git-remote-proland",
+    "name": "@protocol.land/git-remote-helper",
     "version": "0.0.5",
-    "description": "Git Remote Helper",
+    "description": "Protocol Land git remote helper",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -32,10 +32,10 @@
         "LICENSE",
         "README.md"
     ],
-    "homepage": "https://github.com/7i7o/proland#readme",
+    "homepage": "https://github.com/labscommunity/protocol-land-remote-helper#readme",
     "repository": {
         "type": "git",
-        "url": "https://github.com/7i7o/proland.git"
+        "url": "https://github.com/labscommunity/protocol-land-remote-helper.git"
     },
     "devDependencies": {
         "@changesets/cli": "^2.26.2",

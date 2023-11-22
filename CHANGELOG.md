@@ -1,5 +1,11 @@
 # @7i7o/git-remote-proland
 
+## 0.0.5
+
+### Patch Changes
+
+-   30c82dc: update packages
+
 ## 0.0.4
 
 ### Patch Changes

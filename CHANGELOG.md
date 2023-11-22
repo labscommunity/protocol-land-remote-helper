@@ -1,5 +1,11 @@
 # @protocol.land/git-remote-helper
 
+## 0.1.0
+
+### Minor Changes
+
+-   49f5d37: Transfer repo to labscommunity org & npm package to @protocol.land org
+
 ## 0.0.5
 
 ### Patch Changes

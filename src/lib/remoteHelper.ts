@@ -18,6 +18,10 @@ import {
     unsetCacheDirty,
     waitFor,
 } from './common';
+import {
+    trackRepositoryCloneEvent,
+    trackRepositoryUpdateEvent,
+} from './analytics';
 
 // string to check if objects were pushed
 const OBJECTS_PUSHED = 'unpack ok';
@@ -144,6 +148,11 @@ const spawnPipedGitCommand = async (
     // define flag to check if objects have been pushed
     let objectsUpdated = false;
 
+    // define isCloningRepo flag to check if its clone command
+    // tmpPath split is greater than 2 while cloning as in other cases its usually `.git/.protocol.land`
+    const isCloningRepo =
+        gitCommand === 'git-upload-pack' && tmpPath.split(path.sep).length > 2;
+
     // spawn the gitCommand and pipe all stdio
     const gitProcess = spawn(gitCommand, [remoteUrl as string], {
         stdio: ['pipe', 'pipe', 'pipe'], // Pipe for stdin, stdout, and stderr
@@ -202,11 +211,22 @@ const spawnPipedGitCommand = async (
             // remove inconsistent cache mark
             unsetCacheDirty(tmpPath, repo.dataTxId);
 
-            if (success)
+            if (success) {
+                await trackRepositoryUpdateEvent({
+                    repo_name: repo.name,
+                    repo_id: repo.id,
+                    result: 'SUCCESS',
+                });
                 log(`Successfully pushed repo '${repo.id}' to Protocol Land`, {
                     color: 'green',
                 });
-            else {
+            } else {
+                await trackRepositoryUpdateEvent({
+                    repo_name: repo.name,
+                    repo_id: repo.id,
+                    result: 'FAILED',
+                    error: 'Failed to update repository',
+                });
                 log(`Failed to push repo '${repo.id}' to Protocol Land`, {
                     color: 'red',
                 });
@@ -218,6 +238,12 @@ const spawnPipedGitCommand = async (
                 );
                 process.exit(1);
             }
+        } else if (isCloningRepo) {
+            await trackRepositoryCloneEvent({
+                repo_name: repo.name,
+                repo_id: repo.id,
+                result: 'SUCCESS',
+            });
         }
     });
 };

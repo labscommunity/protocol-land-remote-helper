@@ -212,21 +212,15 @@ const spawnPipedGitCommand = async (
             unsetCacheDirty(tmpPath, repo.dataTxId);
 
             if (success) {
+                log(`Successfully pushed repo '${repo.id}' to Protocol Land`, {
+                    color: 'green',
+                });
                 await trackRepositoryUpdateEvent({
                     repo_name: repo.name,
                     repo_id: repo.id,
                     result: 'SUCCESS',
                 });
-                log(`Successfully pushed repo '${repo.id}' to Protocol Land`, {
-                    color: 'green',
-                });
             } else {
-                await trackRepositoryUpdateEvent({
-                    repo_name: repo.name,
-                    repo_id: repo.id,
-                    result: 'FAILED',
-                    error: 'Failed to update repository',
-                });
                 log(`Failed to push repo '${repo.id}' to Protocol Land`, {
                     color: 'red',
                 });
@@ -236,6 +230,12 @@ const spawnPipedGitCommand = async (
                         color: 'red',
                     }
                 );
+                await trackRepositoryUpdateEvent({
+                    repo_name: repo.name,
+                    repo_id: repo.id,
+                    result: 'FAILED',
+                    error: 'Failed to update repository',
+                });
                 process.exit(1);
             }
         } else if (isCloningRepo) {

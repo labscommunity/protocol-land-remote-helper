@@ -22,6 +22,7 @@ export const trackAmplitudeAnalyticsEvent = async (
     category: string,
     action: string,
     label: string,
+    wallet: any,
     data?: Record<any, any>
 ) => {
     try {
@@ -32,7 +33,12 @@ export const trackAmplitudeAnalyticsEvent = async (
 
         await initializeAmplitudeAnalytics();
 
-        const { response: userAddress } = await withAsync(() => getAddress());
+        const { response: userAddress } = await withAsync(() => {
+            if (wallet) {
+                return getAddress(wallet);
+            }
+            return '';
+        });
         if (userAddress) {
             eventOptions = { user_id: userAddress };
         } else {
@@ -60,20 +66,28 @@ export const trackAmplitudeAnalyticsEvent = async (
     }
 };
 
-export const trackRepositoryUpdateEvent = async (data: Record<any, any>) => {
+export const trackRepositoryUpdateEvent = async (
+    wallet: any,
+    data: Record<any, any>
+) => {
     await trackAmplitudeAnalyticsEvent(
         'Repository',
         'Add files to repo',
         'Add files',
+        wallet,
         data
     );
 };
 
-export const trackRepositoryCloneEvent = async (data: Record<any, any>) => {
+export const trackRepositoryCloneEvent = async (
+    wallet: any,
+    data: Record<any, any>
+) => {
     await trackAmplitudeAnalyticsEvent(
         'Repository',
         'Clone a repo',
         'Clone repo',
+        wallet,
         data
     );
 };

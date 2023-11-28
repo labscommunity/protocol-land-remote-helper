@@ -9,7 +9,7 @@ const ANSI_RESET = '\x1b[0m';
 const ANSI_RED = '\x1b[31m';
 const ANSI_GREEN = '\x1b[32m';
 
-const DIRTY_EXT = ".tmp"
+const DIRTY_EXT = '.tmp';
 
 export const PL_TMP_PATH = '.protocol.land';
 export const GIT_CONFIG_KEYFILE = 'protocol.land.keyfile';
@@ -41,7 +41,7 @@ export const getJwkPath = () => {
 };
 
 export const getWallet = (params: { warn: boolean } = { warn: false }) => {
-    if (wallet) return wallet;
+    if (wallet) return wallet as any;
     const jwkPath = getJwkPath();
     if (!jwkPath) return walletNotFoundMessage(params);
     try {
@@ -49,7 +49,8 @@ export const getWallet = (params: { warn: boolean } = { warn: false }) => {
             .toString()
             .trim();
         if (!jwk) return walletNotFoundMessage();
-        return JSON.parse(jwk);
+        wallet = JSON.parse(jwk);
+        return wallet as any;
     } catch (error) {
         return walletNotFoundMessage();
     }

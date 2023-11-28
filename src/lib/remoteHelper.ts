@@ -119,9 +119,10 @@ const spawnPipedGitCommand = async (
     repo: Repo,
     tmpPath: string
 ) => {
+    let wallet: any;
     // if pushing
     if (gitCommand === 'git-receive-pack') {
-        const wallet = getWallet({ warn: false });
+        wallet = getWallet({ warn: false });
 
         // if missing wallet, exit without running gitCommand (getWallet prints a message)
         if (!wallet) process.exit(0);
@@ -136,7 +137,7 @@ const spawnPipedGitCommand = async (
         // not pushing
 
         // getWallet warns if wallet is not found
-        const wallet = getWallet({ warn: true });
+        wallet = getWallet({ warn: true });
 
         if (wallet) {
             // has a wallet defined, but
@@ -215,7 +216,7 @@ const spawnPipedGitCommand = async (
                 log(`Successfully pushed repo '${repo.id}' to Protocol Land`, {
                     color: 'green',
                 });
-                await trackRepositoryUpdateEvent({
+                await trackRepositoryUpdateEvent(wallet, {
                     repo_name: repo.name,
                     repo_id: repo.id,
                     result: 'SUCCESS',
@@ -230,7 +231,7 @@ const spawnPipedGitCommand = async (
                         color: 'red',
                     }
                 );
-                await trackRepositoryUpdateEvent({
+                await trackRepositoryUpdateEvent(wallet, {
                     repo_name: repo.name,
                     repo_id: repo.id,
                     result: 'FAILED',
@@ -239,7 +240,7 @@ const spawnPipedGitCommand = async (
                 process.exit(1);
             }
         } else if (isCloningRepo) {
-            await trackRepositoryCloneEvent({
+            await trackRepositoryCloneEvent(wallet, {
                 repo_name: repo.name,
                 repo_id: repo.id,
                 result: 'SUCCESS',

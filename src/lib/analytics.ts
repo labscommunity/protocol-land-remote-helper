@@ -2,7 +2,9 @@ import {
     init as amplitudeInit,
     track as amplitudeTrack,
 } from '@amplitude/analytics-node';
+import machine from 'node-machine-id';
 import { getAddress } from './arweaveHelper';
+import { withAsync } from './withAsync';
 
 const AMPLITUDE_TRACKING_ID = '92a463755ed8c8b96f0f2353a37b7b2';
 const PLATFORM = '@protocol.land/git-remote-helper';
@@ -23,22 +25,36 @@ export const trackAmplitudeAnalyticsEvent = async (
     data?: Record<any, any>
 ) => {
     try {
+        let eventOptions: { user_id?: string; device_id?: string } = {
+            user_id: undefined,
+            device_id: undefined,
+        };
+
         await initializeAmplitudeAnalytics();
 
-        const userAddress = await getAddress();
-
-        await amplitudeTrack(
-            category,
-            {
-                action,
-                label,
-                platform: PLATFORM,
-                ...data,
-            },
-            {
-                user_id: userAddress,
+        const { response: userAddress } = await withAsync(() => getAddress());
+        if (userAddress) {
+            eventOptions = { user_id: userAddress };
+        } else {
+            const { response: machineId } = await withAsync(() =>
+                machine.machineId(true)
+            );
+            if (machineId) {
+                eventOptions = { device_id: machineId };
             }
-        ).promise;
+        }
+        if (eventOptions?.user_id || eventOptions?.device_id) {
+            await amplitudeTrack(
+                category,
+                {
+                    action,
+                    label,
+                    platform: PLATFORM,
+                    ...data,
+                },
+                eventOptions
+            ).promise;
+        }
     } catch (error) {
         // console.error('Amplitude Analytics Error:', error);
     }

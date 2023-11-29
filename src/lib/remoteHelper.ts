@@ -18,6 +18,10 @@ import {
     unsetCacheDirty,
     waitFor,
 } from './common';
+import {
+    trackRepositoryCloneEvent,
+    trackRepositoryUpdateEvent,
+} from './analytics';
 
 // string to check if objects were pushed
 const OBJECTS_PUSHED = 'unpack ok';
@@ -115,9 +119,10 @@ const spawnPipedGitCommand = async (
     repo: Repo,
     tmpPath: string
 ) => {
+    let wallet: any;
     // if pushing
     if (gitCommand === 'git-receive-pack') {
-        const wallet = getWallet({ warn: false });
+        wallet = getWallet({ warn: false });
 
         // if missing wallet, exit without running gitCommand (getWallet prints a message)
         if (!wallet) process.exit(0);
@@ -132,7 +137,7 @@ const spawnPipedGitCommand = async (
         // not pushing
 
         // getWallet warns if wallet is not found
-        const wallet = getWallet({ warn: true });
+        wallet = getWallet({ warn: true });
 
         if (wallet) {
             // has a wallet defined, but
@@ -143,6 +148,11 @@ const spawnPipedGitCommand = async (
 
     // define flag to check if objects have been pushed
     let objectsUpdated = false;
+
+    // define isCloningRepo flag to check if its clone command
+    // tmpPath split is greater than 2 while cloning as in other cases its usually `.git/.protocol.land`
+    const isCloningRepo =
+        gitCommand === 'git-upload-pack' && tmpPath.split(path.sep).length > 2;
 
     // spawn the gitCommand and pipe all stdio
     const gitProcess = spawn(gitCommand, [remoteUrl as string], {
@@ -202,11 +212,16 @@ const spawnPipedGitCommand = async (
             // remove inconsistent cache mark
             unsetCacheDirty(tmpPath, repo.dataTxId);
 
-            if (success)
+            if (success) {
                 log(`Successfully pushed repo '${repo.id}' to Protocol Land`, {
                     color: 'green',
                 });
-            else {
+                await trackRepositoryUpdateEvent(wallet, {
+                    repo_name: repo.name,
+                    repo_id: repo.id,
+                    result: 'SUCCESS',
+                });
+            } else {
                 log(`Failed to push repo '${repo.id}' to Protocol Land`, {
                     color: 'red',
                 });
@@ -216,8 +231,20 @@ const spawnPipedGitCommand = async (
                         color: 'red',
                     }
                 );
+                await trackRepositoryUpdateEvent(wallet, {
+                    repo_name: repo.name,
+                    repo_id: repo.id,
+                    result: 'FAILED',
+                    error: 'Failed to update repository',
+                });
                 process.exit(1);
             }
+        } else if (isCloningRepo) {
+            await trackRepositoryCloneEvent(wallet, {
+                repo_name: repo.name,
+                repo_id: repo.id,
+                result: 'SUCCESS',
+            });
         }
     });
 };

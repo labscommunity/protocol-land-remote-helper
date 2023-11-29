@@ -1,5 +1,11 @@
 # @protocol.land/git-remote-helper
 
+## 0.1.1
+
+### Patch Changes
+
+-   f4186c1: Add analytics for clone and push, and update readme
+
 ## 0.1.0
 
 ### Minor Changes

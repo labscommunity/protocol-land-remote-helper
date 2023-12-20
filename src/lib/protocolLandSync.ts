@@ -5,7 +5,14 @@ import { unpackGitRepo, zipRepoJsZip } from './zipHelper';
 import type { Repo } from '../types';
 import path from 'path';
 import { existsSync } from 'fs';
-import { PL_TMP_PATH, clearCache, getTags, isCacheDirty, log } from './common';
+import {
+    PL_TMP_PATH,
+    clearCache,
+    getTags,
+    gitdir,
+    isCacheDirty,
+    log,
+} from './common';
 
 export const downloadProtocolLandRepo = async (
     repoId: string,
@@ -106,22 +113,22 @@ export const uploadProtocolLandRepo = async (
     repo: Repo,
     destPath: string
 ) => {
-    // pack repo
-    log('Packing repo ...');
-    const buffer = await zipRepoJsZip(repo.name, repoPath, '', true, [
-        PL_TMP_PATH,
-    ]);
-
-    // upload to bundlr/arweave
-    log('Uploading to Arweave ...');
     let dataTxId: string | undefined;
     try {
+        // pack repo
+        log('Packing repo ...');
+        const buffer = await zipRepoJsZip(repo.name, repoPath, '', [
+            path.join(gitdir, PL_TMP_PATH),
+        ]);
+
+        // upload to bundlr/arweave
+        log('Uploading to Arweave ...');
         dataTxId = await uploadRepo(
             buffer,
             await getTags(repo.name, repo.description)
         );
-    } catch (error) {
-        log(error);
+    } catch (error: any) {
+        log(error?.message || error, { color: 'red' });
     }
     if (!dataTxId) return false;
 

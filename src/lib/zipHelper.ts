@@ -1,27 +1,16 @@
-import fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import path from 'path';
 import JSZip from 'jszip';
-import { log, waitFor } from './common';
+import { exec } from 'child_process';
+import { gitdir, log, waitFor } from './common';
 
-export function writeBufferToFile(buffer: Buffer, filename: string) {
+export async function writeBufferToFile(buffer: Buffer, filename: string) {
     try {
-        fs.writeFileSync(filename, buffer);
+        await fsPromises.writeFile(filename, buffer);
         log(`File "${filename}" written successfully.`);
     } catch (error) {
         log(`Error writing file: ${error}`);
     }
-}
-
-function loadIgnoreList(rootPath: string) {
-    const gitignorePath = path.join(rootPath, '.gitignore');
-    if (fs.existsSync(gitignorePath)) {
-        const gitignoreContent = fs.readFileSync(gitignorePath, 'utf-8');
-        return gitignoreContent
-            .split('\n')
-            .map((line) => line.trim())
-            .filter((line) => line && !line.startsWith('#'));
-    }
-    return [];
 }
 
 export type UnpackGitRepoOptions = {
@@ -34,70 +23,95 @@ export async function unpackGitRepo({
     arrayBuffer,
 }: UnpackGitRepoOptions) {
     const zip = await JSZip.loadAsync(arrayBuffer);
+    const promises: any[] = [];
 
-    zip.forEach(async (_, file) => {
+    for (const [_, file] of Object.entries(zip.files)) {
         if (file.dir) {
             const folderPath = path.join(destPath, file.name);
-            fs.mkdirSync(folderPath, { recursive: true });
+            promises.push(fsPromises.mkdir(folderPath, { recursive: true }));
         } else {
-            const filePath = path.join(destPath, file.name);
-            const content = await file.async('blob');
-            fs.writeFileSync(
-                filePath,
-                new Uint8Array(await content.arrayBuffer())
+            promises.push(
+                (async () => {
+                    const filePath = path.join(destPath, file.name);
+
+                    // Ensure the directory for the file exists
+                    const dirPath = path.dirname(filePath);
+                    await fsPromises.mkdir(dirPath, { recursive: true });
+
+                    const content = await file.async('nodebuffer');
+                    fsPromises.writeFile(filePath, content);
+                })()
             );
         }
-    });
+    }
+
+    await Promise.all(promises);
 
     await waitFor(1000);
 
     return true;
 }
 
+export async function getGitTrackedFiles() {
+    return new Promise<string[]>((resolve, reject) => {
+        exec('git ls-files', { encoding: 'utf-8' }, (error, stdout) => {
+            if (error) {
+                reject(new Error('Error getting git tracked files'));
+            } else {
+                resolve(stdout.trim().split('\n'));
+            }
+        });
+    });
+}
+
 export async function zipRepoJsZip(
     mainPath: string,
     zipRoot: string,
     folderToZip?: string,
-    useGitignore?: boolean,
     ignoreFiles?: string[]
 ) {
     if (!folderToZip) folderToZip = zipRoot;
 
-    const ignoreList = useGitignore ? loadIgnoreList(zipRoot) : [];
-    const ignoreFilesList = ignoreFiles
-        ? ignoreFiles.map((f) => path.join(zipRoot, f))
-        : [];
-
-    // build set of files to ignore from array argument + .gitignore if used
-    const ignoreSet = new Set([...ignoreList, ...ignoreFilesList]);
-
-    const zip = new JSZip();
+    const ignoreFilesList = ignoreFiles ?? [];
 
     const filesToInclude: string[] = [];
 
     // loop to walk the path to pack
-    const walk = (currentPath: string) => {
-        const items = fs.readdirSync(currentPath);
+    const walk = async (currentPath: string) => {
+        const items = await fsPromises.readdir(currentPath);
 
         for (const item of items) {
             const itemPath = path.join(currentPath, item);
 
-            if (ignoreSet.has(item)) {
+            if (
+                ignoreFilesList.some((ignorePath) =>
+                    itemPath.startsWith(ignorePath)
+                )
+            ) {
                 continue;
             }
 
-            if (fs.statSync(itemPath).isDirectory()) {
-                walk(itemPath);
+            const stats = await fsPromises.stat(itemPath);
+
+            if (stats.isDirectory()) {
+                await walk(itemPath);
             } else {
                 filesToInclude.push(itemPath);
             }
         }
     };
-    walk(folderToZip);
+
+    await walk(gitdir);
+
+    const gitTrackedFiles = await getGitTrackedFiles();
+
+    filesToInclude.push(...gitTrackedFiles);
+
+    const zip = new JSZip();
 
     // add files found to be included for packing
     for (const file of filesToInclude) {
-        const content = fs.readFileSync(file);
+        const content = await fsPromises.readFile(file);
         const relativePath = path.join(
             mainPath ? mainPath + '/' : '',
             path.relative(zipRoot, file)

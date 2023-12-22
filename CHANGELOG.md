@@ -1,5 +1,11 @@
 # @protocol.land/git-remote-helper
 
+## 0.1.2
+
+### Patch Changes
+
+-   90c0acc: Update bundler node to Turbo & improve .gitignore handling
+
 ## 0.1.1
 
 ### Patch Changes

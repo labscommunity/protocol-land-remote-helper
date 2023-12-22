@@ -121,7 +121,7 @@ export const uploadProtocolLandRepo = async (
             path.join(gitdir, PL_TMP_PATH),
         ]);
 
-        // upload to bundlr/arweave
+        // upload to turbo/arweave
         log('Uploading to Arweave ...');
         dataTxId = await uploadRepo(
             buffer,

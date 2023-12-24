@@ -13,6 +13,7 @@ import {
     isCacheDirty,
     log,
 } from './common';
+import { decryptRepo, encryptRepo } from './privateRepo';
 
 export const downloadProtocolLandRepo = async (
     repoId: string,
@@ -55,13 +56,20 @@ export const downloadProtocolLandRepo = async (
 
     // if not, download repo data from arweave
     log(`Downloading from arweave with txId '${repo.dataTxId}' ...`);
-    const arrayBuffer = await arweaveDownload(repo.dataTxId);
+    let arrayBuffer = await arweaveDownload(repo.dataTxId);
     if (!arrayBuffer) {
         log('Failed to fetch repo data from arweave.', { color: 'red' });
         log('Check connection or repo integrity in https://protocol.land', {
             color: 'green',
         });
         process.exit(0);
+    }
+
+    const isPrivate = repo?.private || false;
+    const privateStateTxId = repo?.privateStateTxId;
+
+    if (isPrivate && privateStateTxId) {
+        arrayBuffer = await decryptRepo(arrayBuffer, privateStateTxId);
     }
 
     // unzip repo into destPath
@@ -125,9 +133,16 @@ export const uploadProtocolLandRepo = async (
     try {
         // pack repo
         log('Packing repo ...');
-        const buffer = await zipRepoJsZip(repo.id, repoPath, '', [
+        let buffer = await zipRepoJsZip(repo.id, repoPath, '', [
             path.join(gitdir, PL_TMP_PATH),
         ]);
+
+        const isPrivate = repo?.private || false;
+        const privateStateTxId = repo?.privateStateTxId;
+
+        if (isPrivate && privateStateTxId) {
+            buffer = await encryptRepo(buffer, privateStateTxId);
+        }
 
         // upload to turbo/arweave
         log('Uploading to Arweave ...');

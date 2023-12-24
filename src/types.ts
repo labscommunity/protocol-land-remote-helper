@@ -11,6 +11,13 @@ export type Repo = {
     privateStateTxId?: string;
 };
 
+export type PrivateState = {
+    iv: string;
+    encKeys: Record<string, string>;
+    version: string;
+    pubKeys: string[];
+};
+
 export type Tag = {
     name: string;
     value: string;

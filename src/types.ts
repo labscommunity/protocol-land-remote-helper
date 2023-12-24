@@ -5,6 +5,10 @@ export type Repo = {
     dataTxId: string;
     owner: string;
     contributors: string[];
+    fork: boolean;
+    parent: string | null;
+    private: boolean;
+    privateStateTxId?: string;
 };
 
 export type Tag = {

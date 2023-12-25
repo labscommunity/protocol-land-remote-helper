@@ -11,6 +11,14 @@ export async function getAddress(wallet?: JsonWebKey) {
     );
 }
 
+export function getActivePublicKey() {
+    const wallet = getWallet();
+    if (!wallet) {
+        process.exit(0);
+    }
+    return wallet.n;
+}
+
 export async function uploadRepo(zipBuffer: Buffer, tags: Tag[]) {
     try {
         // upload compressed repo using turbo

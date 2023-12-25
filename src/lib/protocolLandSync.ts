@@ -4,7 +4,7 @@ import { arweaveDownload, uploadRepo } from './arweaveHelper';
 import { unpackGitRepo, zipRepoJsZip } from './zipHelper';
 import type { Repo } from '../types';
 import path from 'path';
-import { existsSync } from 'fs';
+import { existsSync, promises as fsPromises } from 'fs';
 import {
     PL_TMP_PATH,
     clearCache,
@@ -13,6 +13,7 @@ import {
     isCacheDirty,
     log,
 } from './common';
+import { decryptRepo, encryptRepo } from './privateRepo';
 
 export const downloadProtocolLandRepo = async (
     repoId: string,
@@ -55,13 +56,20 @@ export const downloadProtocolLandRepo = async (
 
     // if not, download repo data from arweave
     log(`Downloading from arweave with txId '${repo.dataTxId}' ...`);
-    const arrayBuffer = await arweaveDownload(repo.dataTxId);
+    let arrayBuffer = await arweaveDownload(repo.dataTxId);
     if (!arrayBuffer) {
         log('Failed to fetch repo data from arweave.', { color: 'red' });
         log('Check connection or repo integrity in https://protocol.land', {
             color: 'green',
         });
         process.exit(0);
+    }
+
+    const isPrivate = repo?.private || false;
+    const privateStateTxId = repo?.privateStateTxId;
+
+    if (isPrivate && privateStateTxId) {
+        arrayBuffer = await decryptRepo(arrayBuffer, privateStateTxId);
     }
 
     // unzip repo into destPath
@@ -79,9 +87,17 @@ export const downloadProtocolLandRepo = async (
         process.exit(0);
     }
 
-    // unpacked into `repo.name` folder, clone a bare repo from it
-    const unpackedRepoPath = path.join(destPath, repo.name);
+    // unpacked into `repo.id` folder, clone a bare repo from it
+    const unpackedRepoPath = path.join(destPath, repo.id);
     const bareRepoPath = path.join(destPath, repo.dataTxId);
+
+    // Rename parent id to repo id on cloning when fork has not been updated yet
+    if (repo.fork && repo.parent) {
+        const unpackedPath = path.join(destPath, repo.parent);
+        if (existsSync(unpackedPath)) {
+            await fsPromises.rename(unpackedPath, unpackedRepoPath);
+        }
+    }
 
     // clone it as a bare repo
     const cloned = await runCommand(
@@ -117,9 +133,16 @@ export const uploadProtocolLandRepo = async (
     try {
         // pack repo
         log('Packing repo ...');
-        const buffer = await zipRepoJsZip(repo.name, repoPath, '', [
+        let buffer = await zipRepoJsZip(repo.id, repoPath, '', [
             path.join(gitdir, PL_TMP_PATH),
         ]);
+
+        const isPrivate = repo?.private || false;
+        const privateStateTxId = repo?.privateStateTxId;
+
+        if (isPrivate && privateStateTxId) {
+            buffer = await encryptRepo(buffer, privateStateTxId);
+        }
 
         // upload to turbo/arweave
         log('Uploading to Arweave ...');

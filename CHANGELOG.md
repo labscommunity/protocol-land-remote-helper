@@ -1,5 +1,11 @@
 # @protocol.land/git-remote-helper
 
+## 0.1.3
+
+### Patch Changes
+
+-   c52796a: Support repository's new zip folder structure & private repo
+
 ## 0.1.2
 
 ### Patch Changes

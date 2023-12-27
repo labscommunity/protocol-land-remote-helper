@@ -199,6 +199,7 @@ const spawnPipedGitCommand = async (
             waitFor(1000);
 
             // TODO: show TX info and wait for user confirmation if not subsidized
+            // TODO: add git config key to set a limit amount to ask for confirmation
 
             const success = await uploadProtocolLandRepo(
                 pathToPack,

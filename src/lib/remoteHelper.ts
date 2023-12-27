@@ -198,6 +198,8 @@ const spawnPipedGitCommand = async (
 
             waitFor(1000);
 
+            // TODO: show TX info and wait for user confirmation if not subsidized
+
             const success = await uploadProtocolLandRepo(
                 pathToPack,
                 repo,

@@ -1,14 +1,9 @@
-import Arweave from 'arweave';
 import crypto from 'crypto';
 import type { PrivateState } from '../types';
 import { getActivePublicKey } from './arweaveHelper';
-import { getWallet } from './common';
+import { getWallet, initArweave } from './common';
 
-const arweave = new Arweave({
-    host: 'ar-io.net',
-    port: 443,
-    protocol: 'https',
-});
+const arweave = initArweave();
 
 async function deriveAddress(publicKey: string) {
     const pubKeyBuf = arweave.utils.b64UrlToBuffer(publicKey);

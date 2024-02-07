@@ -1,6 +1,5 @@
-import Arweave from 'arweave';
 import { ArweaveSigner, createData } from 'arbundles';
-import { getWallet, log } from './common';
+import { getWallet, initArweave, log } from './common';
 import type { Tag } from '../types';
 import { withAsync } from './withAsync';
 import type { JsonWebKey } from 'crypto';
@@ -33,14 +32,6 @@ export async function uploadRepo(zipBuffer: Buffer, tags: Tag[]) {
         log(`Posted Tx to Arweave: ${arweaveTxId}`);
         return arweaveTxId;
     }
-}
-
-function initArweave() {
-    return Arweave.init({
-        host: 'arweave.net',
-        port: 443,
-        protocol: 'https',
-    });
 }
 
 export async function arweaveDownload(txId: string) {

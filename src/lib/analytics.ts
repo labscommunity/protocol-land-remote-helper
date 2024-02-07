@@ -70,6 +70,7 @@ export const trackRepositoryUpdateEvent = async (
     wallet: any,
     data: Record<any, any>
 ) => {
+    return;
     await trackAmplitudeAnalyticsEvent(
         'Repository',
         'Add files to repo',
@@ -83,6 +84,7 @@ export const trackRepositoryCloneEvent = async (
     wallet: any,
     data: Record<any, any>
 ) => {
+    return;
     await trackAmplitudeAnalyticsEvent(
         'Repository',
         'Clone a repo',

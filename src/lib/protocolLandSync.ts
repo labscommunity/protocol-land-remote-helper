@@ -2,9 +2,10 @@ import { getRepo, updateWarpRepo } from './warpHelper';
 import { spawn } from 'child_process';
 import { arweaveDownload, uploadRepo } from './arweaveHelper';
 import { unpackGitRepo, zipRepoJsZip } from './zipHelper';
+import readline from 'node:readline';
 import type { Repo } from '../types';
 import path from 'path';
-import { existsSync, promises as fsPromises } from 'fs';
+import fs, { existsSync, promises as fsPromises } from 'fs';
 import {
     PL_TMP_PATH,
     clearCache,
@@ -14,6 +15,55 @@ import {
     log,
 } from './common';
 import { decryptRepo, encryptRepo } from './privateRepo';
+import { calculateEstimate } from './prices';
+
+async function checkAccessToTty() {
+    try {
+        await fsPromises.access(
+            '/dev/tty',
+            fs.constants.F_OK | fs.constants.R_OK | fs.constants.W_OK
+        );
+        return true;
+    } catch (err) {
+        return false;
+    }
+}
+
+function createTtyReadlineInterface() {
+    const ttyReadStream = fs.createReadStream('/dev/tty');
+    const ttyWriteStream = fs.createWriteStream('/dev/tty');
+
+    const rl = readline.createInterface({
+        input: ttyReadStream,
+        output: ttyWriteStream,
+    });
+
+    return {
+        rl,
+        ttyReadStream,
+        ttyWriteStream,
+    };
+}
+
+function askQuestionThroughTty(question: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const { rl, ttyReadStream, ttyWriteStream } =
+            createTtyReadlineInterface();
+
+        rl.question(question, (answer: string) => {
+            rl.close();
+            ttyReadStream.destroy();
+            ttyWriteStream.end();
+            ttyWriteStream.on('finish', () => {
+                resolve(answer.trim().toLowerCase());
+            });
+        });
+
+        rl.on('error', (err) => reject(err));
+        ttyReadStream.on('error', (err) => reject(err));
+        ttyWriteStream.on('error', (err) => reject(err));
+    });
+}
 
 export const downloadProtocolLandRepo = async (
     repoId: string,
@@ -132,7 +182,7 @@ export const uploadProtocolLandRepo = async (
     let dataTxId: string | undefined;
     try {
         // pack repo
-        log('Packing repo ...');
+        log('Packing repo ...\n');
         let buffer = await zipRepoJsZip(repo.id, repoPath, '', [
             path.join(gitdir, PL_TMP_PATH),
         ]);
@@ -144,12 +194,36 @@ export const uploadProtocolLandRepo = async (
             buffer = await encryptRepo(buffer, privateStateTxId);
         }
 
-        // upload to turbo/arweave
-        log('Uploading to Arweave ...');
-        dataTxId = await uploadRepo(
-            buffer,
-            await getTags(repo.name, repo.description)
+        const bufferSize = Buffer.byteLength(buffer);
+        const { costInAR, costInUSD, formattedSize } = await calculateEstimate(
+            bufferSize
         );
+
+        const spaces = ' '.repeat(6);
+        log(
+            `Cost Estimates for push:\n${spaces}Size: ${formattedSize}\n${spaces}Cost: ~${costInAR} AR (~${costInUSD} USD)\n`,
+            { color: 'green' }
+        );
+
+        let hasAccessToTty = await checkAccessToTty();
+        let answer = 'n';
+
+        if (hasAccessToTty) {
+            try {
+                answer = await askQuestionThroughTty(' [PL] Push? (y/n): ');
+            } catch (err) {
+                hasAccessToTty = false;
+            }
+        }
+
+        if (answer === 'yes' || answer === 'y' || !hasAccessToTty) {
+            // upload to turbo/arweave
+            log('Uploading to Arweave ...');
+            dataTxId = await uploadRepo(
+                buffer,
+                await getTags(repo.name, repo.description)
+            );
+        }
     } catch (error: any) {
         log(error?.message || error, { color: 'red' });
     }

@@ -50,7 +50,8 @@
         "arweave": "^1.14.4",
         "jszip": "^3.10.1",
         "node-machine-id": "^1.1.12",
+        "redstone-api": "^0.4.11",
         "uuid": "^9.0.1",
-        "warp-contracts": "^1.4.19"
+        "warp-contracts": "^1.4.25"
     }
 }

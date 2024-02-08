@@ -132,6 +132,7 @@ export async function uploadRepo(
         const subsidySize = 500 * 1024; // 500KB;
         return await attemptUpload(subsidySize, 'Turbo', turboUpload);
     } catch (error) {
+        log('Turbo failed, trying with Arweave...');
         return await attemptUpload(0, 'Arweave', arweaveUpload);
     }
 }

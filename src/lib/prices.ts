@@ -62,7 +62,9 @@ export async function calculateEstimate(bytes: number) {
 
     return {
         formattedSize,
-        costInAR: costInAR.toPrecision(5),
-        costInUSD: costInUSD.toPrecision(5),
+        costInAR: costInAR,
+        costInARWithPrecision: costInAR.toPrecision(5),
+        costInUSD: costInUSD,
+        costInUSDWithPrecision: costInUSD.toPrecision(5),
     };
 }

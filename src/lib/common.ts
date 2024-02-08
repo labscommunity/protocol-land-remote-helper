@@ -14,6 +14,7 @@ const DIRTY_EXT = '.tmp';
 
 export const PL_TMP_PATH = '.protocol.land';
 export const GIT_CONFIG_KEYFILE = 'protocol.land.keyfile';
+export const GIT_CONFIG_THRESHOLD_COST = 'protocol.land.thresholdCost';
 export const getWarpContractTxId = () =>
     'xw8kD7s33ElIEioN96sPmLTJj9Rs2v4dZ67KWWKqojQ';
 // get gitdir (usually '.git')
@@ -48,6 +49,20 @@ export const getJwkPath = () => {
             .trim();
     } catch (error) {
         return '';
+    }
+};
+
+export const getThresholdCost = () => {
+    try {
+        const threshold = execSync(
+            `git config --get ${GIT_CONFIG_THRESHOLD_COST}`
+        )
+            .toString()
+            .trim();
+        if (threshold === '') return null;
+        return +threshold;
+    } catch (error) {
+        return null;
     }
 };
 

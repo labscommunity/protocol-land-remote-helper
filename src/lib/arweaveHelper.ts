@@ -111,16 +111,18 @@ export async function uploadRepo(
     uploadSize: number,
     uploadCost: number
 ) {
+    // 500KB subsidySize for TurboUpload and 0 subsidySize for ArweaveUpload
+    const subsidySize = Math.max(500 * 1024, 0);
+    const pushChanges = await shouldPushChanges(
+        uploadSize,
+        uploadCost,
+        subsidySize
+    );
+
     async function attemptUpload(
-        subsidySize: number,
         uploaderName: string,
         uploader: (buffer: Buffer, tags: Tag[]) => Promise<string>
     ) {
-        const pushChanges = await shouldPushChanges(
-            uploadSize,
-            uploadCost,
-            subsidySize
-        );
         if (pushChanges) {
             const txId = await uploader(zipBuffer, tags);
             log(`Posted Tx to ${uploaderName}: ${txId}`);
@@ -130,11 +132,10 @@ export async function uploadRepo(
     }
 
     try {
-        const subsidySize = 500 * 1024; // 500KB;
-        return await attemptUpload(subsidySize, 'Turbo', turboUpload);
+        return await attemptUpload('Turbo', turboUpload);
     } catch (error) {
         log('Turbo failed, trying with Arweave...');
-        return await attemptUpload(0, 'Arweave', arweaveUpload);
+        return await attemptUpload('Arweave', arweaveUpload);
     }
 }
 

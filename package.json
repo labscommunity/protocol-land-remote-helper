@@ -10,7 +10,7 @@
     },
     "scripts": {
         "lint": "tsc",
-        "build": "tsup src/index.ts --format esm --dts",
+        "build": "tsup src/index.ts --format esm",
         "release": "pnpm run build && changeset publish"
     },
     "keywords": [
@@ -26,9 +26,7 @@
     },
     "files": [
         "dist/",
-        "src/",
         "package.json",
-        "tsconfig.json",
         "LICENSE",
         "README.md"
     ],

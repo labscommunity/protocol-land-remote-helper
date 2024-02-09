@@ -131,6 +131,7 @@ export const uploadProtocolLandRepo = async (
     destPath: string
 ) => {
     let dataTxId: string | undefined;
+    let pushCancelled = false;
     try {
         // pack repo
         log('Packing repo ...\n');
@@ -161,23 +162,24 @@ export const uploadProtocolLandRepo = async (
 
         // upload to turbo/arweave
         log('Uploading to Arweave ...');
-        dataTxId = await uploadRepo(
+        ({ txId: dataTxId, pushCancelled } = await uploadRepo(
             buffer,
             await getTags(repo.name, repo.description),
             bufferSize,
             costInAR
-        );
+        ));
     } catch (error: any) {
         log(error?.message || error, { color: 'red' });
+        pushCancelled = false;
     }
-    if (!dataTxId) return false;
+    if (!dataTxId) return { success: false, pushCancelled };
 
     // update repo info in warp
     log('Updating in warp ...');
     const updated = await updateWarpRepo(repo, dataTxId, destPath);
 
     // check for warp update success
-    return updated.id === repo.id;
+    return { success: updated.id === repo.id, pushCancelled };
 };
 
 /** @notice spawns a command with args, optionally forwarding stdout to stderr */

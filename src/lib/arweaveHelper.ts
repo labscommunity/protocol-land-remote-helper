@@ -124,8 +124,9 @@ export async function uploadRepo(
         if (pushChanges) {
             const txId = await uploader(zipBuffer, tags);
             log(`Posted Tx to ${uploaderName}: ${txId}`);
-            return txId;
+            return { txId, pushCancelled: false };
         }
+        return { txid: '', pushCancelled: true };
     }
 
     try {

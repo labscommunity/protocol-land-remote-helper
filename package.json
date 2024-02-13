@@ -1,6 +1,6 @@
 {
     "name": "@protocol.land/git-remote-helper",
-    "version": "0.1.3",
+    "version": "0.2.0",
     "description": "Protocol Land git remote helper",
     "type": "module",
     "main": "dist/index.js",

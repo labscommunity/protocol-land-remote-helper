@@ -1,5 +1,11 @@
 # @protocol.land/git-remote-helper
 
+## 0.2.0
+
+### Minor Changes
+
+-   b533117: feat: Add push consent with threshold configuration & display fees
+
 ## 0.1.3
 
 ### Patch Changes

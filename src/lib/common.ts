@@ -4,6 +4,7 @@ import { execSync } from 'child_process';
 import { accessSync, constants, readFileSync } from 'fs';
 import type { JsonWebKey } from 'crypto';
 import path from 'path';
+import Arweave from 'arweave';
 
 const ANSI_RESET = '\x1b[0m';
 const ANSI_RED = '\x1b[31m';
@@ -13,17 +14,27 @@ const DIRTY_EXT = '.tmp';
 
 export const PL_TMP_PATH = '.protocol.land';
 export const GIT_CONFIG_KEYFILE = 'protocol.land.keyfile';
+export const GIT_CONFIG_THRESHOLD_COST = 'protocol.land.thresholdCost';
 export const getWarpContractTxId = () =>
     'w5ZU15Y2cLzZlu3jewauIlnzbKw-OAxbN9G5TbuuiDQ';
 // get gitdir (usually '.git')
 export const gitdir = process.env.GIT_DIR as string;
+
+export function initArweave() {
+    return Arweave.init({
+        host: 'arweave.net',
+        port: 443,
+        protocol: 'https',
+    });
+}
 
 export const log = (message: any, options?: { color: 'red' | 'green' }) => {
     if (!options) console.error(` [PL] ${message}`);
     else {
         const { color } = options;
         console.error(
-            `${color === 'red' ? ANSI_RED : ANSI_GREEN
+            `${
+                color === 'red' ? ANSI_RED : ANSI_GREEN
             } [PL] ${message}${ANSI_RESET}`
         );
     }
@@ -38,6 +49,20 @@ export const getJwkPath = () => {
             .trim();
     } catch (error) {
         return '';
+    }
+};
+
+export const getThresholdCost = () => {
+    try {
+        const threshold = execSync(
+            `git config --get ${GIT_CONFIG_THRESHOLD_COST}`
+        )
+            .toString()
+            .trim();
+        if (threshold === '') return null;
+        return +threshold;
+    } catch (error) {
+        return null;
     }
 };
 

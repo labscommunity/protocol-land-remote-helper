@@ -1,6 +1,7 @@
-import Arweave from 'arweave';
 import { ArweaveSigner, createData } from 'arbundles';
-import { getWallet, log } from './common';
+import readline from 'node:readline';
+import fs, { promises as fsPromises } from 'fs';
+import { getThresholdCost, getWallet, initArweave, log } from './common';
 import type { Tag } from '../types';
 import { withAsync } from './withAsync';
 import type { JsonWebKey } from 'crypto';
@@ -19,28 +20,123 @@ export function getActivePublicKey() {
     return wallet.n;
 }
 
-export async function uploadRepo(zipBuffer: Buffer, tags: Tag[]) {
+async function checkAccessToTty() {
     try {
-        // upload compressed repo using turbo
-        const turboTxId = await turboUpload(zipBuffer, tags);
-        log(`Posted Tx to Turbo: ${turboTxId}`);
-        return turboTxId;
-    } catch (error) {
-        // dismiss error and try with arweave
-        log('Turbo failed, trying with Arweave...');
-        // let Arweave throw if it encounters errors
-        const arweaveTxId = await arweaveUpload(zipBuffer, tags);
-        log(`Posted Tx to Arweave: ${arweaveTxId}`);
-        return arweaveTxId;
+        await fsPromises.access(
+            '/dev/tty',
+            fs.constants.F_OK | fs.constants.R_OK | fs.constants.W_OK
+        );
+        return true;
+    } catch (err) {
+        return false;
     }
 }
 
-function initArweave() {
-    return Arweave.init({
-        host: 'arweave.net',
-        port: 443,
-        protocol: 'https',
+function createTtyReadlineInterface() {
+    const ttyReadStream = fs.createReadStream('/dev/tty');
+    const ttyWriteStream = fs.createWriteStream('/dev/tty');
+
+    const rl = readline.createInterface({
+        input: ttyReadStream,
+        output: ttyWriteStream,
     });
+
+    return {
+        rl,
+        ttyReadStream,
+        ttyWriteStream,
+    };
+}
+
+function askQuestionThroughTty(question: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const { rl, ttyReadStream, ttyWriteStream } =
+            createTtyReadlineInterface();
+
+        rl.question(question, (answer: string) => {
+            rl.close();
+            ttyReadStream.destroy();
+            ttyWriteStream.end();
+            ttyWriteStream.on('finish', () => {
+                resolve(answer.trim().toLowerCase());
+            });
+        });
+
+        rl.on('error', (err) => reject(err));
+        ttyReadStream.on('error', (err) => reject(err));
+        ttyWriteStream.on('error', (err) => reject(err));
+    });
+}
+
+const shouldPushChanges = async (
+    uploadSize: number,
+    uploadCost: number,
+    subsidySize: number
+) => {
+    let hasAccessToTty = await checkAccessToTty();
+
+    // If no access to TTY, proceed with push by default.
+    if (!hasAccessToTty) return true;
+
+    const thresholdCost = getThresholdCost();
+
+    let showPushConsent;
+
+    if (thresholdCost === null) {
+        // No threshold: Show consent only if above strategy's subsidy.
+        showPushConsent = uploadSize > subsidySize;
+    } else if (uploadCost > thresholdCost) {
+        // Above Threshold: Show consent only if above strategy's subsidy.
+        showPushConsent = uploadSize > subsidySize;
+    } else {
+        // Below Threshold: Don't show consent.
+        showPushConsent = false;
+    }
+
+    // If no consent needed, proceed with push.
+    if (!showPushConsent) return true;
+
+    // Ask for user consent through TTY.
+    try {
+        const answer = await askQuestionThroughTty(' [PL] Push? (y/n): ');
+        return answer === 'yes' || answer === 'y';
+    } catch (err) {
+        return true;
+    }
+};
+
+export async function uploadRepo(
+    zipBuffer: Buffer,
+    tags: Tag[],
+    uploadSize: number,
+    uploadCost: number
+) {
+    // 500KB subsidySize for TurboUpload and 0 subsidySize for ArweaveUpload
+    const subsidySize = Math.max(500 * 1024, 0);
+    const pushChanges = await shouldPushChanges(
+        uploadSize,
+        uploadCost,
+        subsidySize
+    );
+
+    async function attemptUpload(
+        uploaderName: string,
+        uploader: (buffer: Buffer, tags: Tag[]) => Promise<string>
+    ) {
+        if (pushChanges) {
+            const txId = await uploader(zipBuffer, tags);
+            log(`Posted Tx to ${uploaderName}: ${txId}`);
+            return { txId, pushCancelled: false };
+        }
+        return { txid: '', pushCancelled: true };
+    }
+
+    try {
+        return await attemptUpload('Turbo', turboUpload);
+    } catch (error) {
+        log('Turbo failed, trying with Arweave...');
+        return await attemptUpload('Arweave', arweaveUpload);
+    }
 }
 
 export async function arweaveDownload(txId: string) {

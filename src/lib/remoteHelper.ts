@@ -198,7 +198,7 @@ const spawnPipedGitCommand = async (
 
             waitFor(1000);
 
-            const success = await uploadProtocolLandRepo(
+            const { success, pushCancelled } = await uploadProtocolLandRepo(
                 pathToPack,
                 repo,
                 tmpPath
@@ -211,6 +211,16 @@ const spawnPipedGitCommand = async (
 
             // remove inconsistent cache mark
             unsetCacheDirty(tmpPath, repo.dataTxId);
+
+            if (pushCancelled) {
+                log(
+                    `Pushing repo '${repo.id}' to Protocol Land was cancelled`,
+                    {
+                        color: 'red',
+                    }
+                );
+                process.exit(0);
+            }
 
             if (success) {
                 log(`Successfully pushed repo '${repo.id}' to Protocol Land`, {

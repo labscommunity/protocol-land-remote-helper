@@ -40,7 +40,34 @@ To enable `git push` or gain write access to repositories, you'll need an Arweav
 git config --global --add protocol.land.keyfile ~/private_folder/jwk_keyfile.json
 ```
 
-> **Note:** This globally adds the keyfile path for all repositories. If you prefer to use them selectively per repository, omit the `--global` modifier in the `git config` command.
+> [!Note]
+> This globally adds the keyfile path for all repositories. If you prefer to use them selectively per repository, omit the `--global` modifier in the `git config` command.
+
+## Setup Threshold Cost for Push consent
+
+> [!Note]
+> This functionality is compatible with UNIX-based operating systems such as Linux, macOS etc. For Windows users, leveraging the Windows Subsystem for Linux (WSL) is recommended.
+
+To effectively manage push consent based on the cost of pushing changes, you can configure a Threshold Cost. Use the `git config` command to set this threshold value:
+
+```bash
+git config --global --add protocol.land.thresholdCost 0.0003
+```
+
+This command sets the global threshold cost for push consent to `0.0003 AR`. When the estimated push cost exceeds this threshold, users will be prompted to consent to the fee before proceeding with the push.
+
+> [!Note]
+> This threshold is set globally for all repositories. If you wish to apply different thresholds for specific repositories, use the command without the `--global` modifier within the repository's directory.
+
+### Understanding Push Consent Logic
+
+Here's how it decides when to ask for your consent before uploading:
+
+- **No Set Threshold**: Without the threshold set, you'll only be asked for consent if the upload size exceeds the free subsidy size (For example: Turbo bundler used here allows upto 500KB uploads for free).
+- **Over the Threshold**: If the upload cost is more than the threshold, consent is requested only if the upload size is larger than what's freely allowed.
+- **Under the Threshold**: For costs below the threshold, consent isn't needed, and uploads proceed automatically.
+
+Adjusting the threshold cost allows users and organizations to maintain control over their expenditure on network fees, ensuring transparency and consent for every push operation that incurs a cost above the specified threshold.
 
 ## Usage
 

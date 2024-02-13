@@ -14,6 +14,7 @@ import {
     log,
 } from './common';
 import { decryptRepo, encryptRepo } from './privateRepo';
+import { calculateEstimate } from './prices';
 
 export const downloadProtocolLandRepo = async (
     repoId: string,
@@ -130,9 +131,10 @@ export const uploadProtocolLandRepo = async (
     destPath: string
 ) => {
     let dataTxId: string | undefined;
+    let pushCancelled = false;
     try {
         // pack repo
-        log('Packing repo ...');
+        log('Packing repo ...\n');
         let buffer = await zipRepoJsZip(repo.id, repoPath, '', [
             path.join(gitdir, PL_TMP_PATH),
         ]);
@@ -144,23 +146,40 @@ export const uploadProtocolLandRepo = async (
             buffer = await encryptRepo(buffer, privateStateTxId);
         }
 
+        const bufferSize = Buffer.byteLength(buffer);
+        const {
+            costInAR,
+            costInARWithPrecision,
+            costInUSDWithPrecision,
+            formattedSize,
+        } = await calculateEstimate(bufferSize);
+
+        const spaces = ' '.repeat(6);
+        log(
+            `Cost Estimates for push:\n${spaces}Size: ${formattedSize}\n${spaces}Cost: ~${costInARWithPrecision} AR (~${costInUSDWithPrecision} USD)\n`,
+            { color: 'green' }
+        );
+
         // upload to turbo/arweave
         log('Uploading to Arweave ...');
-        dataTxId = await uploadRepo(
+        ({ txId: dataTxId, pushCancelled } = await uploadRepo(
             buffer,
-            await getTags(repo.name, repo.description)
-        );
+            await getTags(repo.name, repo.description),
+            bufferSize,
+            costInAR
+        ));
     } catch (error: any) {
         log(error?.message || error, { color: 'red' });
+        pushCancelled = false;
     }
-    if (!dataTxId) return false;
+    if (!dataTxId) return { success: false, pushCancelled };
 
     // update repo info in warp
     log('Updating in warp ...');
     const updated = await updateWarpRepo(repo, dataTxId, destPath);
 
     // check for warp update success
-    return updated.id === repo.id;
+    return { success: updated.id === repo.id, pushCancelled };
 };
 
 /** @notice spawns a command with args, optionally forwarding stdout to stderr */

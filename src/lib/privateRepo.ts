@@ -38,7 +38,7 @@ async function encryptDataWithExistingKey(
     return encrypted;
 }
 
-async function decryptAesKeyWithPrivateKey(encryptedAesKey: Uint8Array) {
+export async function decryptAesKeyWithPrivateKey(encryptedAesKey: Uint8Array) {
     const privateKey = getWallet();
     const key = await crypto.subtle.importKey(
         'jwk',
@@ -65,7 +65,7 @@ async function decryptAesKeyWithPrivateKey(encryptedAesKey: Uint8Array) {
     return new Uint8Array(decryptedAesKey);
 }
 
-async function decryptFileWithAesGcm(
+export async function decryptFileWithAesGcm(
     encryptedFile: ArrayBuffer,
     decryptedAesKey: ArrayBuffer,
     iv: Uint8Array

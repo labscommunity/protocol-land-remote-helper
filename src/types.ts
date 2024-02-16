@@ -9,7 +9,19 @@ export type Repo = {
     parent: string | null;
     private: boolean;
     privateStateTxId?: string;
+    githubSync: GithubSync | null;
 };
+
+export interface GithubSync {
+    enabled: boolean;
+    repository: string;
+    branch: string;
+    workflowId: string;
+    accessToken: string;
+    privateStateTxId: string;
+    allowed: Array<string>;
+    pending: Array<string>;
+}
 
 export type PrivateState = {
     iv: string;

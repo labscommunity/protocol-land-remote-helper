@@ -97,7 +97,7 @@ export async function triggerGithubSync(repo: Repo) {
         );
 
         if (response.status === 204) {
-            log('Successfully synced to GitHub Successfully');
+            log('Successfully triggered GitHub Sync');
         }
     } catch (err) {
         //

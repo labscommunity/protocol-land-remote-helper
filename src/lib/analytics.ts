@@ -25,7 +25,6 @@ export const trackAmplitudeAnalyticsEvent = async (
     wallet: any,
     data?: Record<any, any>
 ) => {
-    return;
     try {
         let eventOptions: { user_id?: string; device_id?: string } = {
             user_id: undefined,

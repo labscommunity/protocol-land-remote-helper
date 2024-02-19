@@ -16,7 +16,7 @@ export const PL_TMP_PATH = '.protocol.land';
 export const GIT_CONFIG_KEYFILE = 'protocol.land.keyfile';
 export const GIT_CONFIG_THRESHOLD_COST = 'protocol.land.thresholdCost';
 export const getWarpContractTxId = () =>
-    'B8gmo1897cyCjShP7QRe1XndatqLMieeymxehBK_oL8';
+    'w5ZU15Y2cLzZlu3jewauIlnzbKw-OAxbN9G5TbuuiDQ';
 // get gitdir (usually '.git')
 export const gitdir = process.env.GIT_DIR as string;
 

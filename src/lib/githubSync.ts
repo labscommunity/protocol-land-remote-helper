@@ -63,18 +63,18 @@ export async function triggerGithubSync(repo: Repo) {
         if (!githubSync || !githubSync?.enabled) return;
 
         const connectedAddress = await getAddress();
-        const isAllowed =
-            githubSync.allowed.findIndex(
-                (address) => address === connectedAddress
-            ) > -1;
+        const isAllowed = githubSync?.allowed?.includes(connectedAddress);
 
         if (
             !isAllowed ||
             !githubSync.repository ||
             !githubSync.workflowId ||
-            !githubSync.branch
-        )
+            !githubSync.branch ||
+            !githubSync.accessToken ||
+            !githubSync.privateStateTxId
+        ) {
             return;
+        }
 
         const accessToken = await decryptPAT(
             githubSync.accessToken,

@@ -1,5 +1,11 @@
 # @protocol.land/git-remote-helper
 
+## 0.2.1
+
+### Patch Changes
+
+-   b6a4116: feat: Add GitHub Sync trigger on push
+
 ## 0.2.0
 
 ### Minor Changes

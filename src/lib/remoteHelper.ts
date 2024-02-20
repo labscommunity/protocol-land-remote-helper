@@ -22,6 +22,7 @@ import {
     trackRepositoryCloneEvent,
     trackRepositoryUpdateEvent,
 } from './analytics';
+import { triggerGithubSync } from './githubSync';
 
 // string to check if objects were pushed
 const OBJECTS_PUSHED = 'unpack ok';
@@ -223,6 +224,8 @@ const spawnPipedGitCommand = async (
             }
 
             if (success) {
+                await triggerGithubSync(repo);
+
                 log(`Successfully pushed repo '${repo.id}' to Protocol Land`, {
                     color: 'green',
                 });

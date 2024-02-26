@@ -63,7 +63,7 @@ This command sets the global threshold cost for push consent to `0.0003 AR`. Whe
 
 Here's how it decides when to ask for your consent before uploading:
 
-- **No Set Threshold**: Without the threshold set, you'll only be asked for consent if the upload size exceeds the free subsidy size (For example: Turbo bundler used here allows upto 500KB uploads for free).
+- **No Set Threshold**: Without the threshold set, you'll only be asked for consent if the upload size exceeds the free subsidy size (For example: Turbo bundler used here allows upto 105KB uploads for free).
 - **Over the Threshold**: If the upload cost is more than the threshold, consent is requested only if the upload size is larger than what's freely allowed.
 - **Under the Threshold**: For costs below the threshold, consent isn't needed, and uploads proceed automatically.
 

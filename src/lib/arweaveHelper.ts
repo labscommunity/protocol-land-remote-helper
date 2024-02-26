@@ -114,7 +114,12 @@ async function getTurboSubsidy() {
         const data = (await response.json()) as {
             freeUploadLimitBytes: number;
         };
-        return +data.freeUploadLimitBytes ?? defaultSubsidy;
+
+        const freeUploadLimitBytes = +data.freeUploadLimitBytes;
+
+        if (Number.isFinite(freeUploadLimitBytes)) return freeUploadLimitBytes;
+
+        return defaultSubsidy;
     } catch (err) {}
     return defaultSubsidy;
 }

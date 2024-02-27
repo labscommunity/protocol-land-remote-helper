@@ -4,9 +4,35 @@ import {
     defaultCacheOptions,
     type LogLevel,
 } from 'warp-contracts/mjs';
-import { getWallet, getWarpContractTxId, isValidUuid, waitFor } from './common';
+import {
+    PL_TMP_PATH,
+    getWallet,
+    getWarpContractTxId,
+    isValidUuid,
+    waitFor,
+} from './common';
 import type { Repo, User } from '../types';
+import envPaths from 'env-paths';
 import path from 'path';
+import fs from 'fs';
+
+async function getWarpContract(signer?: any) {
+    const contractTxId = getWarpContractTxId();
+    const cacheDirectory = envPaths(PL_TMP_PATH, { suffix: '' }).cache;
+    const cacheDirectoryExists = fs.existsSync(cacheDirectory);
+
+    const warp = getWarp(cacheDirectory);
+    const contract = warp.contract(contractTxId);
+
+    if (!cacheDirectoryExists) {
+        fs.mkdirSync(cacheDirectory, { recursive: true });
+        await contract
+            .syncState('https://dre-1.warp.cc/contract', { validity: true })
+            .catch(() => {});
+    }
+
+    return signer ? contract.connect(signer) : contract;
+}
 
 export const getWarpCacheOptions = (cachePath: string) => {
     return {
@@ -58,11 +84,7 @@ export async function getRepo(id: string, destpath?: string) {
     }
 }
 
-export async function updateWarpRepo(
-    repo: Repo,
-    newDataTxId: string,
-    destPath?: string
-) {
+export async function updateWarpRepo(repo: Repo, newDataTxId: string) {
     if (!repo.id || !repo.name || !newDataTxId)
         throw '[ warp ] No id, title or dataTxId to update repo ';
 

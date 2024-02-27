@@ -209,7 +209,7 @@ const spawnPipedGitCommand = async (
             // We clear the cached remote:
             //   If upload succeeded, there's a new txId for the repo
             //   If upload failed, the cached remote has an inconsistent state
-            clearCache(tmpPath, { keepFolders: ['cache'] });
+            clearCache(tmpPath, { keepFolders: [] });
 
             // remove inconsistent cache mark
             unsetCacheDirty(tmpPath, repo.dataTxId);

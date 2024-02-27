@@ -25,7 +25,7 @@ export const downloadProtocolLandRepo = async (
     // find repo in Protocol Land's warp contract
     let repo: Repo | undefined;
     try {
-        repo = await getRepo(repoId, destPath);
+        repo = await getRepo(repoId);
     } catch (err) {
         log(err);
     }
@@ -52,7 +52,7 @@ export const downloadProtocolLandRepo = async (
         }
 
         // cache is dirty, clear cache and continue
-        clearCache(destPath, { keepFolders: ['cache'] });
+        clearCache(destPath, { keepFolders: [] });
     }
 
     // if not, download repo data from arweave
@@ -119,7 +119,7 @@ export const downloadProtocolLandRepo = async (
 
     // rm -rf everything but the bare repo and warp cache (discard stdout)
     try {
-        clearCache(destPath, { keepFolders: ['cache', repo.dataTxId] });
+        clearCache(destPath, { keepFolders: [repo.dataTxId] });
     } catch {}
 
     return repo;
@@ -176,7 +176,7 @@ export const uploadProtocolLandRepo = async (
 
     // update repo info in warp
     log('Updating in warp ...');
-    const updated = await updateWarpRepo(repo, dataTxId, destPath);
+    const updated = await updateWarpRepo(repo, dataTxId);
 
     // check for warp update success
     return { success: updated.id === repo.id, pushCancelled };

@@ -17,6 +17,7 @@ import {
     setCacheDirty,
     unsetCacheDirty,
     waitFor,
+    setGitRemoteOrigin,
 } from './common';
 import {
     trackRepositoryCloneEvent,
@@ -253,6 +254,7 @@ const spawnPipedGitCommand = async (
                 process.exit(1);
             }
         } else if (isCloningRepo) {
+            setGitRemoteOrigin(repo);
             await trackRepositoryCloneEvent(wallet, {
                 repo_name: repo.name,
                 repo_id: repo.id,

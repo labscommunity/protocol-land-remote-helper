@@ -77,7 +77,7 @@ This command enables `git` to synchronize with [Protocol Land](https://protocol.
 
 ### Clone Repositories
 
-Clone a repository using the following command:
+#### Clone a repository using ID
 
 ```bash
 git clone proland://YOUR_PROTOCOL_LAND_REPO_ID repo-name
@@ -87,6 +87,18 @@ For example, to clone [Protocol Land's repository](https://protocol.land/#/repos
 
 ```bash
 git clone proland://6ace6247-d267-463d-b5bd-7e50d98c3693 protocol-land
+```
+
+#### Clone a repository using username and repository name
+
+```bash
+git clone proland://username/repo-name
+```
+
+For example, to clone [Protocol Land's repository](https://protocol.land/#/repository/6ace6247-d267-463d-b5bd-7e50d98c3693), run:
+
+```bash
+git clone proland://clabstest/protocol-land
 ```
 
 ### Adding a Protocol Land Repository as a Remote

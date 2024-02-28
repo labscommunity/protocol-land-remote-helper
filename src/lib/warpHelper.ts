@@ -9,6 +9,7 @@ import {
     getWallet,
     getWarpContractTxId,
     isValidUuid,
+    log,
     waitFor,
 } from './common';
 import type { Repo, User } from '../types';
@@ -20,6 +21,8 @@ async function getWarpContract(signer?: any) {
     const contractTxId = getWarpContractTxId();
     const cacheDirectory = envPaths(PL_TMP_PATH, { suffix: '' }).cache;
     const cacheDirectoryExists = fs.existsSync(cacheDirectory);
+
+    log(`Warp cache stored at: ${cacheDirectory}`);
 
     const warp = getWarp(cacheDirectory);
     const contract = warp.contract(contractTxId);

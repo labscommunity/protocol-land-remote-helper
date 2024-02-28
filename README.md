@@ -110,3 +110,11 @@ git remote add origin proland://YOUR_PROTOCOL_LAND_REPO_ID
 ```
 
 Replace `YOUR_PROTOCOL_LAND_REPO_ID` with the specific ID of the Protocol Land repository you wish to associate with your project. This establishes a connection to the remote repository, allowing you to fetch, pull, and push changes seamlessly.
+
+## Fix Remote Helper Issues
+
+If you're facing problems with the remote helper that is related to corrupted warp cache, try deleting the Warp cache directory shown while running Git commands. After deleting it, run your Git commands again to check if the issues are resolved.
+
+For example, this is the directory where the warp cache is stored. It varies for every user.
+
+![image](https://github.com/labscommunity/protocol-land-remote-helper/assets/11836100/640669bf-f196-4302-a5c2-3d1a95387b90)

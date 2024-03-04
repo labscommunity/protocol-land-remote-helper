@@ -30,7 +30,9 @@ async function getWarpContract(signer?: any) {
     if (!cacheDirectoryExists) {
         fs.mkdirSync(cacheDirectory, { recursive: true });
         await contract
-            .syncState('https://dre-1.warp.cc/contract', { validity: true })
+            .syncState('https://pl-cache.saikranthi.dev/contract', {
+                validity: true,
+            })
             .catch(() => {});
     }
 
@@ -54,7 +56,7 @@ const getWarp = (destPath?: string, logLevel?: LogLevel) => {
 };
 
 export async function getRepo(id: string, destpath?: string) {
-    let pl = getWarp(destpath).contract(getWarpContractTxId());
+    let pl = await getWarpContract();
     if (isValidUuid(id)) {
         // let warp throw error if it can't retrieve the repository
         const response = await pl.viewState({

@@ -199,3 +199,25 @@ export const exitWithError = (message: string) => {
     log(``);
     process.exit(1);
 };
+
+export function isValidUuid(uuid: string) {
+    const REGEX =
+        /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
+    return typeof uuid === 'string' && REGEX.test(uuid);
+}
+
+export function setGitRemoteOrigin(repo: Repo) {
+    try {
+        const remoteUrl = process.argv[3];
+        if (!remoteUrl) return;
+
+        const repoId = `${remoteUrl.replace(/.*:\/\//, '')}`;
+        if (isValidUuid(repoId)) return;
+
+        const repoPath = gitdir.split(path.sep).slice(0, -2).join(path.sep);
+        const currentDir = process.cwd();
+        process.chdir(repoPath);
+        execSync(`git remote set-url origin proland://${repo.id}`);
+        process.chdir(currentDir);
+    } catch (error) {}
+}

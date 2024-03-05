@@ -1,3 +1,16 @@
+export type User = {
+    fullname?: string;
+    username?: string;
+    isUserNameArNS?: boolean;
+    avatar?: string;
+    bio?: string;
+    location?: string;
+    twitter?: string;
+    email?: string;
+    website?: string;
+    readmeTxId?: string;
+};
+
 export type Repo = {
     id: string;
     name: string;

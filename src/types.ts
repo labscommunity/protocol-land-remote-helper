@@ -47,3 +47,9 @@ export type Tag = {
     name: string;
     value: string;
 };
+
+export type SubsidizedUploadJsonResponse = {
+    success: boolean;
+    data: { repoTxId: string };
+    error?: string;
+};

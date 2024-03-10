@@ -2,7 +2,7 @@ import { ArweaveSigner, createData } from 'arbundles';
 import readline from 'node:readline';
 import fs, { promises as fsPromises } from 'fs';
 import { getThresholdCost, getWallet, initArweave, log } from './common';
-import type { Tag } from '../types';
+import type { SubsidizedUploadJsonResponse, Tag } from '../types';
 import { withAsync } from './withAsync';
 import type { JsonWebKey } from 'crypto';
 
@@ -207,4 +207,38 @@ export async function turboUpload(zipBuffer: Buffer, tags: Tag[]) {
         );
 
     return dataItem.id;
+}
+
+export async function subsidizedUpload(zipBuffer: Buffer, tags: Tag[]) {
+    const jwk = getWallet();
+    if (!jwk) throw '[ turbo ] No jwk wallet supplied';
+
+    const node = 'https://subsidize.saikranthi.dev/api/v1/postrepo';
+    const uint8ArrayZip = new Uint8Array(zipBuffer);
+    const signer = new ArweaveSigner(jwk);
+    const address = await getAddress(jwk);
+
+    const dataItem = createData(uint8ArrayZip, signer, { tags });
+
+    await dataItem.sign(signer);
+
+    const res = await fetch(`${node}/tx`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/octet-stream',
+        },
+        body: JSON.stringify({
+            txBundle: dataItem.getRaw(),
+            platform: 'CLI',
+            owner: address,
+        }),
+    });
+    const upload = (await res.json()) as SubsidizedUploadJsonResponse;
+
+    if (!upload || !upload.success)
+        throw new Error(
+            `[ turbo ] Posting repo with turbo failed. Error: ${res.status} - ${res.statusText}`
+        );
+
+    return upload.data ? upload.data.repoTxId : dataItem.id;
 }

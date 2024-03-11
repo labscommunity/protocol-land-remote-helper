@@ -1,8 +1,8 @@
-import { ArweaveSigner, createData } from 'arbundles';
+import { ArweaveSigner, bundleAndSignData, createData } from 'arbundles';
 import readline from 'node:readline';
 import fs, { promises as fsPromises } from 'fs';
 import { getThresholdCost, getWallet, initArweave, log } from './common';
-import type { Tag } from '../types';
+import type { SubsidizedUploadJsonResponse, Tag } from '../types';
 import { withAsync } from './withAsync';
 import type { JsonWebKey } from 'crypto';
 
@@ -111,6 +111,22 @@ export async function uploadRepo(
     uploadSize: number,
     uploadCost: number
 ) {
+    //Subsidized Upload
+    try {
+        const uploadedTx = await subsidizedUpload(zipBuffer, tags);
+        const serviceUsed = uploadedTx.bundled ? 'Turbo' : 'Arweave';
+
+        log(`Posted Tx to ${serviceUsed}: ${uploadedTx.data.repoTxId}`);
+        return { txId: uploadedTx.data.repoTxId, pushCancelled: false };
+    } catch (error) {
+        const userWantsToPay = await shouldUserPayForTx();
+
+        if (!userWantsToPay) {
+            return { txid: '', pushCancelled: true };
+        }
+        //continue
+    }
+
     // 500KB subsidySize for TurboUpload and 0 subsidySize for ArweaveUpload
     const subsidySize = Math.max(500 * 1024, 0);
     const pushChanges = await shouldPushChanges(
@@ -207,4 +223,53 @@ export async function turboUpload(zipBuffer: Buffer, tags: Tag[]) {
         );
 
     return dataItem.id;
+}
+
+export async function subsidizedUpload(zipBuffer: Buffer, tags: Tag[]) {
+    const jwk = getWallet();
+    if (!jwk) throw '[ turbo ] No jwk wallet supplied';
+
+    const node = 'https://subsidize.saikranthi.dev/api/v1/postrepo';
+    const uint8ArrayZip = new Uint8Array(zipBuffer);
+    const signer = new ArweaveSigner(jwk);
+    const address = await getAddress(jwk);
+
+    const dataItem = createData(uint8ArrayZip, signer, { tags });
+    await dataItem.sign(signer);
+
+    const bundle = await bundleAndSignData([dataItem], signer);
+
+    const res = await fetch(`${node}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+        },
+        body: JSON.stringify({
+            txBundle: bundle.getRaw(),
+            platform: 'CLI',
+            owner: address,
+        }),
+    });
+    const upload = (await res.json()) as SubsidizedUploadJsonResponse;
+
+    if (!upload || !upload.success)
+        throw new Error(
+            `[ turbo ] Posting repo with turbo failed. Error: ${res.status} - ${res.statusText}`
+        );
+
+    return upload;
+}
+
+async function shouldUserPayForTx() {
+    log('[ PL SUBSIDIZE ] Failed to subsidize this transaction.');
+
+    try {
+        const answer = await askQuestionThroughTty(
+            ' [PL] Would you like to pay for this transaction yourself? (y/n): '
+        );
+        return answer === 'yes' || answer === 'y';
+    } catch (err) {
+        return true;
+    }
 }

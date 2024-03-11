@@ -92,7 +92,10 @@ export async function triggerGithubSync(repo: Repo) {
                     'X-GitHub-Api-Version': '2022-11-28',
                     Authorization: `Bearer ${accessToken}`,
                 },
-                body: JSON.stringify({ ref: githubSync?.branch, inputs: {} }),
+                body: JSON.stringify({
+                    ref: githubSync?.branch,
+                    inputs: { repoId: repo.id },
+                }),
             }
         );
 

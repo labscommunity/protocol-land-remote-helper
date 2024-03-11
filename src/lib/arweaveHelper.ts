@@ -105,6 +105,25 @@ const shouldPushChanges = async (
     }
 };
 
+async function getTurboSubsidy() {
+    const defaultSubsidy = 107520;
+    try {
+        const response = await fetch('https://turbo.ardrive.io/');
+        if (!response.ok) return defaultSubsidy;
+
+        const data = (await response.json()) as {
+            freeUploadLimitBytes: number;
+        };
+
+        const freeUploadLimitBytes = +data.freeUploadLimitBytes;
+
+        if (Number.isFinite(freeUploadLimitBytes)) return freeUploadLimitBytes;
+
+        return defaultSubsidy;
+    } catch (err) {}
+    return defaultSubsidy;
+}
+
 export async function uploadRepo(
     zipBuffer: Buffer,
     tags: Tag[],
@@ -127,8 +146,9 @@ export async function uploadRepo(
         //continue
     }
 
-    // 500KB subsidySize for TurboUpload and 0 subsidySize for ArweaveUpload
-    const subsidySize = Math.max(500 * 1024, 0);
+    // 105KB subsidySize for TurboUpload and 0 subsidySize for ArweaveUpload
+    const turboSubsidySize = await getTurboSubsidy();
+    const subsidySize = Math.max(turboSubsidySize, 0);
     const pushChanges = await shouldPushChanges(
         uploadSize,
         uploadCost,

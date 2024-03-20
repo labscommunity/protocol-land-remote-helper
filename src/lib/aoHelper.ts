@@ -65,6 +65,8 @@ export async function getRepo(id: string) {
         'dataTxId',
         'contributors',
         'githubSync',
+        'private',
+        'privateStateTxId',
     ]);
     if (isValidUuid(id)) {
         ({ Messages } = await dryrun({

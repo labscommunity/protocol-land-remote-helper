@@ -72,7 +72,7 @@ export async function getRepo(id: string) {
         ({ Messages } = await dryrun({
             process: AOS_PROCESS_ID,
             tags: getTags({
-                Action: 'Get-Repository',
+                Action: 'Get-Repo',
                 Id: id,
                 Fields: fields,
             }),
@@ -84,7 +84,7 @@ export async function getRepo(id: string) {
         ({ Messages } = await dryrun({
             process: AOS_PROCESS_ID,
             tags: getTags({
-                Action: 'Get-Repository-By-Name-Username',
+                Action: 'Get-Repo-By-Name-Username',
                 RepoName: repoName,
                 Username: username,
                 Fields: fields,
@@ -105,7 +105,7 @@ export async function updateRepo(repo: Repo, newDataTxId: string) {
 
     await sendMessage({
         tags: getTags({
-            Action: 'Update-Repository-TxId',
+            Action: 'Update-Repo-TxId',
             Id: repo.id,
             DataTxId: newDataTxId,
         }),

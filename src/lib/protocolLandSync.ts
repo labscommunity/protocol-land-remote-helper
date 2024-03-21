@@ -1,4 +1,4 @@
-import { getRepo, updateWarpRepo } from './warpHelper';
+import { getRepo, updateRepo } from './aoHelper';
 import { spawn } from 'child_process';
 import { arweaveDownload, uploadRepo } from './arweaveHelper';
 import { unpackGitRepo, zipRepoJsZip } from './zipHelper';
@@ -22,7 +22,7 @@ export const downloadProtocolLandRepo = async (
 ) => {
     log(`Getting latest repo from Protocol.Land into '${destPath}' ...`);
 
-    // find repo in Protocol Land's warp contract
+    // find repo in Protocol Land's AO contract
     let repo: Repo | undefined;
     try {
         repo = await getRepo(repoId);
@@ -117,7 +117,7 @@ export const downloadProtocolLandRepo = async (
         process.exit(0);
     }
 
-    // rm -rf everything but the bare repo and warp cache (discard stdout)
+    // rm -rf everything but the bare repo and AO cache (discard stdout)
     try {
         clearCache(destPath, { keepFolders: [repo.dataTxId] });
     } catch {}
@@ -174,11 +174,11 @@ export const uploadProtocolLandRepo = async (
     }
     if (!dataTxId) return { success: false, pushCancelled };
 
-    // update repo info in warp
-    log('Updating in warp ...');
-    const updated = await updateWarpRepo(repo, dataTxId);
+    // update repo info in AO
+    log('Updating in AO ...');
+    const updated = await updateRepo(repo, dataTxId);
 
-    // check for warp update success
+    // check for AO update success
     return { success: updated.id === repo.id, pushCancelled };
 };
 

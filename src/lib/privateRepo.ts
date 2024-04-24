@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import type { PrivateState } from '../types';
 import { getActivePublicKey } from './arweaveHelper';
 import { getWallet, initArweave } from './common';
+import { isCryptoKey } from 'util/types';
 
 const arweave = initArweave();
 
@@ -19,7 +20,7 @@ async function encryptDataWithExistingKey(
 ) {
     let key = aesKey;
 
-    if (!(aesKey instanceof crypto.webcrypto.CryptoKey)) {
+    if (!isCryptoKey(aesKey)) {
         key = await crypto.subtle.importKey(
             'raw',
             aesKey,

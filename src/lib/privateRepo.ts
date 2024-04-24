@@ -2,9 +2,17 @@ import crypto from 'crypto';
 import type { PrivateState } from '../types';
 import { getActivePublicKey } from './arweaveHelper';
 import { getWallet, initArweave } from './common';
-import { isCryptoKey } from 'util/types';
 
 const arweave = initArweave();
+
+function isCryptoKey(obj: any) {
+    try {
+        // @ts-ignore
+        return obj instanceof CryptoKey;
+    } catch (e) {
+        return obj instanceof crypto.webcrypto.CryptoKey;
+    }
+}
 
 async function deriveAddress(publicKey: string) {
     const pubKeyBuf = arweave.utils.b64UrlToBuffer(publicKey);

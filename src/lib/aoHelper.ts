@@ -85,7 +85,7 @@ export async function getRepo(id: string) {
             process: AOS_PROCESS_ID,
             tags: getTags({
                 Action: 'Get-Repo-By-Name-Username',
-                RepoName: repoName,
+                "Repo-Name": repoName,
                 Username: username,
                 Fields: fields,
             }),
@@ -107,7 +107,7 @@ export async function updateRepo(repo: Repo, newDataTxId: string) {
         tags: getTags({
             Action: 'Update-Repo-TxId',
             Id: repo.id,
-            DataTxId: newDataTxId,
+            "Data-TxId": newDataTxId,
         }),
     });
 

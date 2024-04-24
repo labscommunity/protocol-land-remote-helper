@@ -5,6 +5,15 @@ import { getWallet, initArweave } from './common';
 
 const arweave = initArweave();
 
+function isCryptoKey(obj: any) {
+    try {
+        // @ts-ignore
+        return obj instanceof CryptoKey;
+    } catch (e) {
+        return obj instanceof crypto.webcrypto.CryptoKey;
+    }
+}
+
 async function deriveAddress(publicKey: string) {
     const pubKeyBuf = arweave.utils.b64UrlToBuffer(publicKey);
     const sha512DigestBuf = await crypto.subtle.digest('SHA-512', pubKeyBuf);
@@ -19,7 +28,7 @@ async function encryptDataWithExistingKey(
 ) {
     let key = aesKey;
 
-    if (!(aesKey instanceof crypto.webcrypto.CryptoKey)) {
+    if (!isCryptoKey(aesKey)) {
         key = await crypto.subtle.importKey(
             'raw',
             aesKey,

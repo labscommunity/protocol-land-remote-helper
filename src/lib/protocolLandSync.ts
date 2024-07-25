@@ -13,7 +13,7 @@ import {
     isCacheDirty,
     log,
 } from './common';
-import { decryptRepo, encryptRepo } from './privateRepo';
+import { decryptRepo } from './privateRepo';
 import { calculateEstimate } from './prices';
 
 export const downloadProtocolLandRepo = async (
@@ -143,7 +143,7 @@ export const uploadProtocolLandRepo = async (
         const privateStateTxId = repo?.privateStateTxId;
 
         if (isPrivate && privateStateTxId) {
-            buffer = await encryptRepo(buffer, privateStateTxId);
+            throw new Error('Private repos are no longer supported.');
         }
 
         const bufferSize = Buffer.byteLength(buffer);

@@ -50,7 +50,16 @@ export type Tag = {
 
 export type SubsidizedUploadJsonResponse = {
     success: boolean;
-    bundled:boolean;
+    bundled: boolean;
     data: { repoTxId: string };
     error?: string;
+};
+
+export type SendMessageArgs = {
+    data?: string;
+    tags: {
+        name: string;
+        value: string;
+    }[];
+    anchor?: string;
 };
